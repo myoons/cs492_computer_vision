@@ -103,7 +103,7 @@ def show_image(images, h, w):
 
 
 def main():
-  # Load Face DATASET
+  # Data
   mat = scipy.io.loadmat('./face.mat')
   H = 46
   W = 56
@@ -136,8 +136,8 @@ def main():
   images = rearrange(x_mean, '(H W) -> H W', H=H, W=W)
   images = repeat(images, 'H W -> 1 H W')
   # show_image(images, 1, 1)
-  
-  # Plot EigenFace
+
+  # Plot Eigen Vectors -> Q. 여기서 x_mean을 더해야 하나?
   temp_eig_vectors = rearrange(eig_vectors, '(H W) N  -> N H W', N=H*W, H=H, W=W)
   fig = plt.figure(figsize=(8,8)) 
   fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
@@ -146,9 +146,6 @@ def main():
     ax.imshow(np.reshape(temp_eig_vectors[i], (46,56)), cmap=plt.cm.bone, interpolation='nearest') 
   plt.show()
 
-
-
-  # x_test: 104, 2576
   # Reconstruction
   M = 80 # used_eigenvectors
   indices = np.arange(M)
@@ -157,15 +154,12 @@ def main():
   proj_x_inverse = proj_x @ (principal_eigen_vectors.T) # N_test, D
   result = proj_x_inverse + x_mean # N_test, D
   
-  #  Plot Test Image  
   plot_n = 10
   images = np.take(result, np.arange(plot_n), axis=0)
   images = rearrange(images, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
   images_gt = np.take(x_test, np.arange(plot_n), axis=0)
   images_gt = rearrange(images_gt, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-  
-  show_image(np.concatenate([images_gt, images], axis=0), 2, 10)
-  # show_image(images, 5, 2)
+  show_image(np.concatenate([images_gt, images], axis=0), 2, plot_n)
 
 if __name__ == "__main__":
   	main()
