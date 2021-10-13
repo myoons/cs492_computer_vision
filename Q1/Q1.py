@@ -2,12 +2,12 @@
 # To add a new markdown cell, type '# %% [markdown]'
 from __future__ import print_function
 from IPython import get_ipython
+# %matplotlib inline
 
 # get_ipython().system('pip install -U ipykernel')
 
 
 
-#%matplotlib inline
 import argparse
 import os
 os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -25,6 +25,7 @@ from IPython.display import HTML
 from einops import rearrange, repeat
 import sklearn.cluster
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.datasets import fetch_olivetti_faces
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.metrics.cluster import normalized_mutual_info_score
@@ -47,8 +48,7 @@ def GaussianMatrix(X,sigma):
 def Gaussian(x,z,sigma):
     return np.exp((-(np.linalg.norm(x-z)**2))/(2*sigma**2))
 
-def main():
-  # Spectral Clustering
+def sandbox():
   ground_truth = [0,1,0]
 
   X = GaussianMatrix(np.array([[1,2],[3,1],[1,1]]) , 1)
@@ -92,11 +92,30 @@ def main():
   v2 = 0.2+0.3+0.1
   v3 = (0.5+0.1+0.1+0.4)/2.0
 
+
+def main():
+  # Load Face DATASET
   mat = scipy.io.loadmat('./face.mat')
-  print("face data", mat['X'], mat['l']);
-
-
+  H = 46
+  W = 56
+  n_image = len(mat['l'][0])
+  n_image_per_person = 10
+  n_people = n_image / n_image_per_person
+  images_data = np.array(mat['X']);
+  images_data = np.transpose(images_data);
+  images = rearrange(images_data, 'N (H W) -> N H W', N=n_image, H=H, W=W);
+  labels = np.array(mat['l']);
+  labels = np.transpose(labels);
   
+  # Plot Image  
+  fig = plt.figure(figsize=(100,100))
+  fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
+  for i in range(n_image):
+      ax = fig.add_subplot(n_people, n_image_per_person, i+1, xticks=[], yticks=[])
+      ax.imshow(images[i], cmap=plt.cm.bone, interpolation='nearest')
+
+  plt.show()
+
+
 if __name__ == "__main__":
   	main()
-  
