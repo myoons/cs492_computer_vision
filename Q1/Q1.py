@@ -10,6 +10,7 @@ from IPython import get_ipython
 
 import argparse
 import os
+import time
 
 from numpy.lib.arraysetops import setdiff1d
 from numpy.linalg.linalg import eig
@@ -98,17 +99,40 @@ def show_image(images, h, w):
   fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
   for i in range(plot_n):
     ax = fig.add_subplot(h, w, i+1, xticks=[], yticks=[])
-    ax.imshow(images[i], cmap=plt.cm.bone, interpolation='nearest')
+    ax.imshow(images[i].T, cmap=plt.cm.bone, interpolation='nearest')
   plt.show()
 
+def calculate_reconstruction_error(x_gt, x_mean, eigen_vectors, rank):
+  Reconstruction_Error = []
+  for M in range(rank):
+    indices = np.arange(M)
+    principal_eigen_vectors = np.take(eigen_vectors, indices, axis=-1) # D, M 
+    proj_x = (x_gt - x_mean) @ principal_eigen_vectors # N_test, M
+    proj_x_inverse = proj_x @ (principal_eigen_vectors.T) # N_test, D
+    result = proj_x_inverse + x_mean # N_test, D
+    diff = np.linalg.norm((x_gt - result), ord=2, axis=1)
+    error = np.mean(diff) 
+    Reconstruction_Error.append(error)
+    # Qualitative Result
+    # ============================================================
+    # plot_n = 10
+    # images = np.take(result, np.arange(plot_n), axis=0)
+    # images_gt = np.take(x_gt, np.arange(plot_n), axis=0)
+    # images = rearrange(images, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
+    # images_gt = rearrange(images_gt, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
+    # if(M % 100 == 0):
+    #   show_image(np.concatenate([images_gt, images], axis=0), 2, plot_n)
+    # ============================================================
+  return Reconstruction_Error
 
 def main():
   # Data
   mat = scipy.io.loadmat('./face.mat')
   H = 46
   W = 56
-  D = H*W 
+  D = H*W
   n_image = len(mat['l'][0])
+  N = n_image 
   n_image_test = int( n_image*(0.2))
   n_image_train = n_image - n_image_test
   n_image_per_person = 10
@@ -123,43 +147,86 @@ def main():
   # Training
   x_mean = np.mean(x_train, axis=0) # 1, D
   x = x_train - x_mean # N, D
-  x = x.T
-  cov_x = np.cov(x)
+  x = x.T # D, N
+
+  # Method 1
+  start = time.time() 
+  cov_x = (x@x.T) / N # D, D
   eig_values, eig_vectors = np.linalg.eig(cov_x,)
   eig_values = np.real(eig_values)
   eig_vectors = np.real(eig_vectors)
+  idx = eig_values.argsort()[::-1]   
+  eig_values = eig_values[idx]
+  eig_vectors = eig_vectors[:,idx]
+  print("time 1:", time.time() - start) 
   
-  # Zero eigen Value Index
+  # Method 2 - low computation
+  start = time.time() 
+  cov_x_LC = (x.T @ x) / N
+  eig_values_LC, eig_vectors_LC = np.linalg.eig(cov_x_LC,)
+  eig_values_LC = np.real(eig_values_LC)
+  eig_vectors_LC = np.real(eig_vectors_LC)
+  idx = eig_values_LC.argsort()[::-1]   
+  eig_values_LC = eig_values_LC[idx]
+  eig_vectors_LC = eig_vectors_LC[:,idx]
+  print("time 2:", time.time() - start) 
+  
+
+  # Difference of Two Methods in EigenVector, EigenValue
+  # ====================================================================
+  original_eig_vectors = np.take( eig_vectors, np.arange(416), axis=-1)
+  estimated_eig_vectors = x @ eig_vectors_LC
+  estimated_eig_vectors = estimated_eig_vectors / np.linalg.norm(estimated_eig_vectors, axis=0)
+  diff_of_eigvalue = eig_values[:416] - eig_values_LC
+  diff_of_eigvalue_bool = np.where(diff_of_eigvalue < 10**-6, True, False)
+  diff_of_eigvectors = original_eig_vectors - estimated_eig_vectors
+  diff_of_eigvectors_bool = np.where((diff_of_eigvectors < 10**-6), True, False)
+
   zero_eig_idx = np.where(eig_values < 10**-6)
+  zero_eig_idx_LC = np.where(eig_values_LC < 10**-6)
+  rank_of_eig = int(zero_eig_idx[0][0]);
+  rank_of_eig_LC = int(zero_eig_idx_LC[0][0]);
+  # ====================================================================
+  
 
   # Plot Mean Face  
-  images = rearrange(x_mean, '(H W) -> H W', H=H, W=W)
-  images = repeat(images, 'H W -> 1 H W')
-  # show_image(images, 1, 1)
+  # ====================================================================
+  images = rearrange(x_mean, '(H W) -> 1 H W', H=H, W=W)
+  show_image(images, 1, 1)
+  # ====================================================================
 
-  # Plot Eigen Vectors -> Q. 여기서 x_mean을 더해야 하나?
-  temp_eig_vectors = rearrange(eig_vectors, '(H W) N  -> N H W', N=H*W, H=H, W=W)
-  fig = plt.figure(figsize=(8,8)) 
-  fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
-  for i in range(10): 
-    ax = fig.add_subplot(2, 5, i+1, xticks=[], yticks=[]) 
-    ax.imshow(np.reshape(temp_eig_vectors[i], (46,56)), cmap=plt.cm.bone, interpolation='nearest') 
-  plt.show()
+  # Plot Eigen Vectors  
+  # ====================================================================
+  # temp_eig_vectors = rearrange(eig_vectors, '(H W) N  -> N H W', N=H*W, H=H, W=W)
+  # show_image(temp_eig_vectors, 2, 5)
+  # ====================================================================
+  # Q. 여기서 x_mean을 더해야 하나?
+
 
   # Reconstruction
-  M = 80 # used_eigenvectors
-  indices = np.arange(M)
-  principal_eigen_vectors = np.take(eig_vectors, indices, axis=-1) # D, M 
-  proj_x = (x_test - x_mean) @ principal_eigen_vectors # N_test, M
-  proj_x_inverse = proj_x @ (principal_eigen_vectors.T) # N_test, D
-  result = proj_x_inverse + x_mean # N_test, D
+  # ====================================================================
+  Reconstruction_Error_Train = calculate_reconstruction_error(
+    x_gt=x_train, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
   
-  plot_n = 10
-  images = np.take(result, np.arange(plot_n), axis=0)
-  images = rearrange(images, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-  images_gt = np.take(x_test, np.arange(plot_n), axis=0)
-  images_gt = rearrange(images_gt, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-  show_image(np.concatenate([images_gt, images], axis=0), 2, plot_n)
+  Reconstruction_Error_Test = calculate_reconstruction_error(
+    x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
+  
+  Reconstruction_Error_Train_LC = calculate_reconstruction_error(
+    x_gt=x_train, x_mean=x_mean, eigen_vectors=estimated_eig_vectors, rank=rank_of_eig_LC)
+  
+  Reconstruction_Error_Test_LC = calculate_reconstruction_error(
+    x_gt=x_test, x_mean=x_mean, eigen_vectors=estimated_eig_vectors, rank=rank_of_eig_LC)
+  
+  plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Train))
+  plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Test))
+  plt.plot(np.arange(rank_of_eig_LC), np.array(Reconstruction_Error_Train_LC))
+  plt.plot(np.arange(rank_of_eig_LC), np.array(Reconstruction_Error_Test_LC))
+  plt.xlabel('Principal Component')
+  plt.ylabel('Reconstruction Loss')
+  plt.legend(['train', 'test', 'train(LC)', 'test(LC)'])
+  plt.show()
+  # ====================================================================
+
 
 if __name__ == "__main__":
   	main()
