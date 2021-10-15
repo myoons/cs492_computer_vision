@@ -143,13 +143,11 @@ def main():
   labels = np.transpose(labels)
   x_train, x_test, y_train, y_test = train_test_split(images_data, labels,
             test_size=0.2, shuffle=True, stratify=labels, random_state = 34)
-
-  # Training
   x_mean = np.mean(x_train, axis=0) # 1, D
   x = x_train - x_mean # N, D
   x = x.T # D, N
 
-  # Method 1
+  # Training Method 1
   start = time.time() 
   cov_x = (x@x.T) / N # D, D
   eig_values, eig_vectors = np.linalg.eig(cov_x,)
@@ -160,7 +158,7 @@ def main():
   eig_vectors = eig_vectors[:,idx]
   print("time 1:", time.time() - start) 
   
-  # Method 2 - low computation
+  # Training Method 2 - low computation
   start = time.time() 
   cov_x_LC = (x.T @ x) / N
   eig_values_LC, eig_vectors_LC = np.linalg.eig(cov_x_LC,)
