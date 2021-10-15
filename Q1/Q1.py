@@ -195,8 +195,8 @@ def main():
 
   # Plot Eigen Vectors  
   # ====================================================================
-  # temp_eig_vectors = rearrange(eig_vectors, '(H W) N  -> N H W', N=H*W, H=H, W=W)
-  # show_image(temp_eig_vectors, 2, 5)
+  temp_eig_vectors = rearrange(eig_vectors, '(H W) N  -> N H W', N=H*W, H=H, W=W)
+  show_image(temp_eig_vectors, 2, 5)
   # ====================================================================
   # Q. 여기서 x_mean을 더해야 하나?
 
