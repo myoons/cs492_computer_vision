@@ -1,11 +1,16 @@
+import warnings
+
+warnings.filterwarnings("ignore")
+
+import time
 import numpy as np
 from scipy import io
+from tqdm import trange
 from numpy import linalg
 from argparse import ArgumentParser
 
 from utils.dataset import split_train_test
-from utils.visualize import visualize_face, visualize_faces
-
+from utils.visualize import visualize_face, visualize_faces, visualize_graph, visualize_tsne
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -15,73 +20,130 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # Load face dataset
     face_data = io.loadmat('data/face.mat')
     faces, identities = face_data['X'], face_data['l']
 
-    # Partition the provided face data into train & test
+    """ Split Dataset """
     dataset = split_train_test(faces, identities, r=0.8, n_per_identity=10)
 
-    # Visualize data
     if args.vis:
-        visualize_faces(dataset['test_faces'], identities=dataset['test_identities'], n=1, random=False)
+        visualize_faces(dataset['test_faces'], identities=dataset['test_identities'], n=1, random=False,
+                        title="Dataset")
 
-    # Compute average face vector and visualize
-    average_face = np.average(dataset['train_faces'], axis=1)
+    average_face = np.average(dataset['train_faces'], axis=0)
     if args.vis:
-        visualize_face(average_face)
+        visualize_face(average_face, title="Average Face")
 
     # Subtract average face
-    subtracted_faces = dataset['train_faces'] - np.repeat(average_face[..., np.newaxis], dataset['train_faces'].shape[1], axis=1)
+    subtracted_faces = dataset['train_faces'] - average_face
 
-    # Compute covariance matrix S
-    covariance = (subtracted_faces @ subtracted_faces.T) / subtracted_faces.shape[1]
+    """ Compute Eigenface """
+    start = time.time()
+    covariance = (subtracted_faces.T @ subtracted_faces) / subtracted_faces.shape[0]
 
-    # Compute the eigenvectors of covariance
     eigenvalues, eigenvectors = linalg.eig(covariance)
-    eigenvalues, eigenvectors = eigenvalues.astype(np.float), eigenvectors.astype(np.float)
-    best_m_eigenvalues, best_m_eigenvectors = eigenvalues[:args.best_m], eigenvectors[..., :args.best_m]
+    print(f"Original Eigenface Calculation Time : {time.time() - start:.3f}")
+
+    eigenvalues, eigenvectors = eigenvalues.astype(float), np.swapaxes(eigenvectors.astype(float), 0, 1)
+    sort_indices = np.argsort(eigenvalues)[::-1]
+    best_m_eigenvectors = eigenvectors[sort_indices[:args.best_m]]
 
     if args.vis:
-        visualize_faces(best_m_eigenvectors.astype(np.float), n=1, random=False)
+        visualize_faces(best_m_eigenvectors.astype(float), n=1, random=False, title="Best Eigenvectors")
 
-    # Reconstruct face with eigenfaces
-    reconstruct_indices = np.random.choice(dataset["train_faces"].shape[1], 5, replace=False)
+    """ Compute Low Computation Eigenface """
+    start = time.time()
+    low_covariance = (subtracted_faces @ subtracted_faces.T) / subtracted_faces.shape[0]
 
-    target_faces, reconstructed_faces = [], []
-    for idx in reconstruct_indices:
-        target_face = dataset["train_faces"][..., idx]
-        reconstructed = average_face + np.sum(best_m_eigenvectors * (target_face @ best_m_eigenvectors), axis=1)
-
-        target_faces.append(target_face)
-        reconstructed_faces.append(reconstructed)
-
-    if args.vis:
-        visualize_faces(np.swapaxes(np.array(target_faces + reconstructed_faces), 0, 1), n=1)
-
-    # Use low-dimensional computation of eigenspace
-    low_covariance = (subtracted_faces.T @ subtracted_faces) / subtracted_faces.shape[1]
-
-    # Compute the eigenvectors of covariance
     low_eigenvalues, low_eigenvectors = linalg.eig(low_covariance)
-    low_eigenvectors = (subtracted_faces @ low_eigenvectors) / linalg.norm(subtracted_faces @ low_eigenvectors, axis=0)
-    low_eigenvalues, low_eigenvectors = low_eigenvalues.astype(np.float), low_eigenvectors.astype(np.float)
+    proj = low_eigenvectors.T @ subtracted_faces
+    low_eigenvectors = proj / linalg.norm(proj, axis=1)[..., np.newaxis]
+    print(f"Low Eigenface Calculation Time : {time.time() - start:.3f}")
 
-    low_best_m_eigenvalues, low_best_m_eigenvectors = low_eigenvalues[:args.best_m], low_eigenvectors[..., :args.best_m]
-
-    if args.vis:
-        visualize_faces(low_best_m_eigenvectors.astype(np.float), n=1, random=False)
-
-    # Reconstruct face with eigenfaces
-    reconstruct_indices = np.random.choice(dataset["train_faces"].shape[1], 5, replace=False)
-
-    target_faces, reconstructed_faces = [], []
-    for idx in reconstruct_indices:
-        target_face = dataset["train_faces"][..., idx]
-        reconstructed = average_face + np.sum(best_m_eigenvectors * (target_face @ best_m_eigenvectors), axis=1)
-
-        target_faces.append(target_face)
-        reconstructed_faces.append(reconstructed)
+    low_eigenvalues, low_eigenvectors = low_eigenvalues.astype(float), low_eigenvectors.astype(float)
+    low_sort_indices = np.argsort(low_eigenvalues)[::-1]
+    low_best_m_eigenvectors = low_eigenvectors[low_sort_indices[:args.best_m]]
 
     if args.vis:
-        visualize_faces(np.swapaxes(np.array(target_faces + reconstructed_faces), 0, 1), n=1)
+        visualize_faces(low_best_m_eigenvectors.astype(float), n=1, random=False, title="Best Low Eigenvectors")
+
+    """ Visualize Reconstruction """
+    if args.vis:
+        reconstruct_indices = np.random.choice(dataset["train_faces"].shape[0], 5, replace=False)
+        target = subtracted_faces[reconstruct_indices]
+
+        reconstructed = average_face + (target @ best_m_eigenvectors.T) @ best_m_eigenvectors
+        visualize_faces(np.concatenate([target, reconstructed], axis=0), n=1, title="Train Face Reconstruction with Eigenvectors")
+
+        reconstructed = average_face + (target @ low_best_m_eigenvectors.T) @ low_best_m_eigenvectors
+        visualize_faces(np.concatenate([target, reconstructed], axis=0), n=1, title="Train Face Reconstruction with Low Eigenvectors")
+
+    """ Train Reconstruction Loss """
+    train_reconstruction_losses = []
+    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+        temp_eigenvectors = eigenvectors[sort_indices[:m]]
+        reconstructed = average_face + (subtracted_faces @ temp_eigenvectors.T)  @ temp_eigenvectors
+        train_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
+
+    train_low_reconstruction_losses = []
+    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+        temp_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
+        reconstructed = average_face + (subtracted_faces @ temp_eigenvectors.T)  @ temp_eigenvectors
+        train_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
+
+    """ Test Reconstruction Loss """
+    test_subtracted_faces = dataset["test_faces"] - average_face
+
+    test_reconstruction_losses = []
+    for m in trange(1, dataset["test_faces"].shape[0] + 1):
+        temp_eigenvectors = eigenvectors[sort_indices[:m]]
+        reconstructed = average_face + (test_subtracted_faces @ temp_eigenvectors.T)  @ temp_eigenvectors
+        test_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
+
+    test_low_reconstruction_losses = []
+    for m in trange(1, dataset["test_faces"].shape[0] + 1):
+        temp_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
+        reconstructed = average_face + (test_subtracted_faces @ temp_eigenvectors.T)  @ temp_eigenvectors
+        test_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
+
+    """ Visualize Reconstruction Losses """
+    if args.vis:
+        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0] + 1),
+                        y_axes=[train_reconstruction_losses, train_low_reconstruction_losses],
+                        xlabel="M",
+                        ylabel="Reconstruction Train Loss",
+                        legend=['Original', 'Low Computation'],
+                        title="Reconstruction Train Loss")
+
+        visualize_graph(x_axis=np.arange(1, dataset["test_faces"].shape[0] + 1),
+                        y_axes=[test_reconstruction_losses, test_low_reconstruction_losses],
+                        xlabel="M",
+                        ylabel="Reconstruction Test Loss",
+                        legend=['Original', 'Low Computation'],
+                        title="Reconstruction Test Loss")
+
+        visualize_graph(x_axis=np.arange(1, dataset["test_faces"].shape[0] + 1),
+                        y_axes=[train_reconstruction_losses[:dataset["test_faces"].shape[0]],
+                                train_low_reconstruction_losses[:dataset["test_faces"].shape[0]],
+                                test_reconstruction_losses,
+                                test_low_reconstruction_losses],
+                        xlabel="M",
+                        ylabel="Reconstruction Loss",
+                        legend=['Original_Train', 'Low Computation_Train', 'Original_Test', 'Low Computation_Test'],
+                        title="Reconstruction Loss")
+
+    """ t-SNE """
+    if args.vis:
+        n_identities = 5
+
+        visualize_tsne(data=subtracted_faces[:n_identities*8],
+                       identities=dataset["train_identities"][:n_identities*8],
+                       title="t-SNE Train Faces")
+
+        visualize_tsne(data=subtracted_faces[:n_identities*8] @ best_m_eigenvectors.T,
+                       identities=dataset["train_identities"][:n_identities*8],
+                       title="t-SNE Train Projected")
+
+        visualize_tsne(data=test_subtracted_faces[:n_identities*2] @ best_m_eigenvectors.T,
+                       identities=dataset["test_identities"][:n_identities*2],
+                       title="t-SNE Test Projected")
