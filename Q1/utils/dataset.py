@@ -8,9 +8,9 @@ def split_train_test(faces, identities, r=0.8, n_per_identity=10):
     all_indices = np.arange(faces.shape[1])
 
     dataset = dict()
-    dataset['train_faces'] = faces[..., (all_indices % n_per_identity) < split]
-    dataset['train_identities'] = identities[..., (all_indices % n_per_identity) < split]
-    dataset['test_faces'] = faces[..., (all_indices % n_per_identity) >= split]
-    dataset['test_identities'] = identities[..., (all_indices % n_per_identity) >= split]
+    dataset['train_faces'] = np.swapaxes(faces[..., (all_indices % n_per_identity) < split], 0, 1)
+    dataset['train_identities'] = np.swapaxes(identities[..., (all_indices % n_per_identity) < split], 0, 1)
+    dataset['test_faces'] = np.swapaxes(faces[..., (all_indices % n_per_identity) >= split], 0, 1)
+    dataset['test_identities'] = np.swapaxes(identities[..., (all_indices % n_per_identity) >= split], 0, 1)
 
     return dataset
