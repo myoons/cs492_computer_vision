@@ -8,13 +8,14 @@ import matplotlib.pyplot as plt
 import scipy.io
 
 
-def show_image(images, h, w):
+def show_image(images, h, w, title):
   plot_n = h * w
   fig = plt.figure(figsize=(6,6))
-  fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
+  # fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
   for i in range(plot_n):
     ax = fig.add_subplot(h, w, i+1, xticks=[], yticks=[])
     ax.imshow(images[i].T, cmap=plt.cm.bone, interpolation=None)
+  plt.savefig(title)
   plt.show()
 
 def calculate_reconstruction_error(x_gt, x_mean, eigen_vectors, rank):
@@ -32,13 +33,13 @@ def calculate_reconstruction_error(x_gt, x_mean, eigen_vectors, rank):
     Reconstruction_Error.append(error)
     # Qualitative Result
     # ============================================================
-    plot_n = 4
-    images = np.take(result, np.arange(plot_n), axis=0)
-    images_gt = np.take(x_gt, np.arange(plot_n), axis=0)
-    images = rearrange(images, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-    images_gt = rearrange(images_gt, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-    if(M % 100 == 0):
-      show_image(np.concatenate([images_gt, images], axis=0), 2, plot_n)
+    # plot_n = 4
+    # images = np.take(result, np.arange(plot_n), axis=0)
+    # images_gt = np.take(x_gt, np.arange(plot_n), axis=0)
+    # images = rearrange(images, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
+    # images_gt = rearrange(images_gt, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
+    # if(M % 100 == 0):
+      # show_image(np.concatenate([images_gt, images], axis=0), 2, plot_n, )
     # ============================================================
   return Reconstruction_Error
 
@@ -66,15 +67,11 @@ def qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig, eig_L
       plot_n = 4
       images = np.take(result, np.arange(plot_n), axis=0)
       images_LC = np.take(result_LC, np.arange(plot_n), axis=0)
-      # images_gt = np.take(x_gt, np.arange(plot_n), axis=0)
       images = rearrange(images, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
       images_LC = rearrange(images_LC, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-      # images_gt = rearrange(images_gt, 'N (H W) -> N H W', N=plot_n, H=H, W=W)
-      # show_image(np.concatenate([images_LC, images], axis=0), 2, plot_n)
       w = 2
       h = plot_n
       fig = plt.figure(figsize=(9,9))
-      # fig.subplots_adjust(left=0, right=1, bottom=0, top=1, hspace=0.05, wspace=0.05)
       rows = ['ID {}'.format(row) for row in range(1, plot_n+1)]
       for i in range(w*h):
         ax = fig.add_subplot(h, w, i+1, xticks=[], yticks=[])
@@ -94,7 +91,8 @@ def qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig, eig_L
       else:
         model='test'
       fig.suptitle(model + '\n(PCs = {})'.format(M))
-      plt.show()
+      plt.savefig('Q1/figures/'+model+'_{}'.format(M))
+      # plt.show()
       # ============================================================
   
   return;
@@ -164,43 +162,44 @@ def main():
   # Plot Mean Face  
   # ====================================================================
   images = rearrange(x_mean, '(H W) -> 1 H W', H=H, W=W)
-  # show_image(images, 1, 1)
+  show_image(images, 1, 1, 'Q1/figures/mean_face')
   # ====================================================================
 
   # Plot Eigen Vectors  
   # ====================================================================
   temp_eig_vectors = rearrange(eig_vectors, '(H W) N  -> N H W', N=H*W, H=H, W=W)
-  # show_image(temp_eig_vectors, 2, 5)
+  show_image(temp_eig_vectors, 2, 5, 'Q1/figures/eigen_Faces')
   # ====================================================================
   # Q. 여기서 x_mean을 더해야 하나?
 
 
   # Reconstruction
   # ====================================================================
-  # Reconstruction_Error_Train = calculate_reconstruction_error(
-  #   x_gt=x_train, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
+  Reconstruction_Error_Train = calculate_reconstruction_error(
+    x_gt=x_train, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
   
-  # Reconstruction_Error_Test = calculate_reconstruction_error(
-  #   x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
+  Reconstruction_Error_Test = calculate_reconstruction_error(
+    x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
   
-  # Reconstruction_Error_Train_LC = calculate_reconstruction_error(
-  #   x_gt=x_train, x_mean=x_mean, eigen_vectors=eig_vectors_LC, rank=rank_of_eig_LC)
+  Reconstruction_Error_Train_LC = calculate_reconstruction_error(
+    x_gt=x_train, x_mean=x_mean, eigen_vectors=eig_vectors_LC, rank=rank_of_eig_LC)
   
-  # Reconstruction_Error_Test_LC = calculate_reconstruction_error(
-  #   x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors_LC, rank=rank_of_eig_LC)
-  
-  # plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Train))
-  # plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Test))
-  # plt.plot(np.arange(rank_of_eig_LC), np.array(Reconstruction_Error_Train_LC))
-  # plt.plot(np.arange(rank_of_eig_LC), np.array(Reconstruction_Error_Test_LC))
-  # plt.xlabel('Principal Component')
-  # plt.ylabel('Reconstruction Loss')
-  # plt.legend(['train', 'test', 'train(LC)', 'test(LC)'])
+  Reconstruction_Error_Test_LC = calculate_reconstruction_error(
+    x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors_LC, rank=rank_of_eig_LC)
+  plt.clf()
+  plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Train))
+  plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Test))
+  plt.plot(np.arange(rank_of_eig_LC), np.array(Reconstruction_Error_Train_LC))
+  plt.plot(np.arange(rank_of_eig_LC), np.array(Reconstruction_Error_Test_LC))
+  plt.xlabel('Principal Component')
+  plt.ylabel('Reconstruction Loss')
+  plt.legend(['train', 'test', 'train(LC)', 'test(LC)'])
+  plt.savefig('Q1/figures/Reconstruction Loss')
   # plt.show()
   # ====================================================================
 
   # Reconstruction for Qualitative Comparison
-  qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig_vectors, eig_vectors_LC)
+  # qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig_vectors, eig_vectors_LC)
 
 
 if __name__ == "__main__":
