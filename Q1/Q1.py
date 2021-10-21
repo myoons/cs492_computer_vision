@@ -141,17 +141,17 @@ def main():
   idx = eig_values_LC.argsort()[::-1]   
   eig_values_LC = eig_values_LC[idx]
   eig_vectors_LC = eig_vectors_LC[:,idx]
+  eig_vectors_LC = x @ eig_vectors_LC
+  eig_vectors_LC = eig_vectors_LC / np.linalg.norm(eig_vectors_LC, axis=0)
   print("time (Low Computation):", time.time() - start) 
   
 
   # Difference of Two Methods in EigenVector, EigenValue
   # ====================================================================
   original_eig_vectors = np.take( eig_vectors, np.arange(416), axis=-1)
-  estimated_eig_vectors = x @ eig_vectors_LC
-  estimated_eig_vectors = estimated_eig_vectors / np.linalg.norm(estimated_eig_vectors, axis=0)
   diff_of_eigvalue = eig_values[:416] - eig_values_LC
   diff_of_eigvalue_bool = np.where(diff_of_eigvalue < 10**-6, True, False)
-  diff_of_eigvectors = original_eig_vectors - estimated_eig_vectors
+  diff_of_eigvectors = original_eig_vectors - eig_vectors_LC
   diff_of_eigvectors_bool = np.where((diff_of_eigvectors < 10**-6), True, False)
 
   zero_eig_idx = np.where(eig_values < 10**-6)
@@ -184,10 +184,10 @@ def main():
   #   x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors, rank=rank_of_eig)
   
   # Reconstruction_Error_Train_LC = calculate_reconstruction_error(
-  #   x_gt=x_train, x_mean=x_mean, eigen_vectors=estimated_eig_vectors, rank=rank_of_eig_LC)
+  #   x_gt=x_train, x_mean=x_mean, eigen_vectors=eig_vectors_LC, rank=rank_of_eig_LC)
   
   # Reconstruction_Error_Test_LC = calculate_reconstruction_error(
-  #   x_gt=x_test, x_mean=x_mean, eigen_vectors=estimated_eig_vectors, rank=rank_of_eig_LC)
+  #   x_gt=x_test, x_mean=x_mean, eigen_vectors=eig_vectors_LC, rank=rank_of_eig_LC)
   
   # plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Train))
   # plt.plot(np.arange(rank_of_eig), np.array(Reconstruction_Error_Test))
@@ -200,7 +200,7 @@ def main():
   # ====================================================================
 
   # Reconstruction for Qualitative Comparison
-  qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig_vectors, estimated_eig_vectors)
+  qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig_vectors, eig_vectors_LC)
 
 
 if __name__ == "__main__":
