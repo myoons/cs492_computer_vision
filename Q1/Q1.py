@@ -112,7 +112,7 @@ def qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig, eig_L
 
 def main():
     # Data
-    mat = scipy.io.loadmat('./face.mat')
+    mat = scipy.io.loadmat('face.mat')
     H = 46
     W = 56
     D = H * W
