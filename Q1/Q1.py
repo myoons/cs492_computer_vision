@@ -98,7 +98,7 @@ def qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig, eig_L
                 else:
                     ax.imshow(images_LC[k].T, cmap=plt.cm.bone, interpolation=None)
 
-            if (mode == 0):
+            if mode == 0:
                 model = 'train'
             else:
                 model = 'test'
