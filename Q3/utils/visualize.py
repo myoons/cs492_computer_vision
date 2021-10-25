@@ -12,5 +12,5 @@ def visualize_confusion_matrix(y_test, prediction, title):
     plt.xlabel('Predicted')
     plt.ylabel('Expected')
     plt.title(title)
-    plt.savefig('figures/w.png')
+    plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
     plt.show()
