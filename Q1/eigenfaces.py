@@ -73,10 +73,12 @@ if __name__ == '__main__':
         target = subtracted_faces[reconstruct_indices]
 
         reconstructed = average_face + (target @ best_m_eigenvectors.T) @ best_m_eigenvectors
-        visualize_faces(np.concatenate([target, reconstructed], axis=0), n=1, title="Train Face Reconstruction with Eigenvectors")
+        visualize_faces(np.concatenate([target, reconstructed], axis=0), n=1,
+                        title="Train Face Reconstruction with Eigenvectors")
 
         reconstructed = average_face + (target @ low_best_m_eigenvectors.T) @ low_best_m_eigenvectors
-        visualize_faces(np.concatenate([target, reconstructed], axis=0), n=1, title="Train Face Reconstruction with Low Eigenvectors")
+        visualize_faces(np.concatenate([target, reconstructed], axis=0), n=1,
+                        title="Train Face Reconstruction with Low Eigenvectors")
 
     """ Train Reconstruction Loss """
     train_reconstruction_losses = []
@@ -136,16 +138,16 @@ if __name__ == '__main__':
     if args.vis:
         n_identities = 5
 
-        visualize_tsne(data=subtracted_faces[:n_identities*8],
-                       identities=dataset["train_identities"][:n_identities*8],
+        visualize_tsne(data=subtracted_faces[:n_identities * 8],
+                       identities=dataset["train_identities"][:n_identities * 8],
                        title="t-SNE Train Faces")
 
-        visualize_tsne(data=subtracted_faces[:n_identities*8] @ best_m_eigenvectors.T,
-                       identities=dataset["train_identities"][:n_identities*8],
+        visualize_tsne(data=subtracted_faces[:n_identities * 8] @ best_m_eigenvectors.T,
+                       identities=dataset["train_identities"][:n_identities * 8],
                        title="t-SNE Train Projected")
 
-        visualize_tsne(data=test_subtracted_faces[:n_identities*2] @ best_m_eigenvectors.T,
-                       identities=dataset["test_identities"][:n_identities*2],
+        visualize_tsne(data=test_subtracted_faces[:n_identities * 2] @ best_m_eigenvectors.T,
+                       identities=dataset["test_identities"][:n_identities * 2],
                        title="t-SNE Test Projected")
 
     """ Nearest Neighbor """
