@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    face_data = io.loadmat('data/face.mat')
+    face_data = io.loadmat('Q3/data/face.mat')
     faces, identities = face_data['X'], face_data['l']
 
     """ Split Dataset """
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     print("clf.score             : {0:.3f}".format(clf.score(x_train, y_train)))
     print("clf.score             : {0:.3f}".format(clf.score(x_test, y_test)))
     # print("(pred == y_test) score: {0:.3f}".format((prediction == y_test).mean()))
-    visualize_confusion_matrix(y_test, prediction, 'Reconstruction: Vanilla')
+    visualize_confusion_matrix(y_test, prediction, 'Reconstruction_Vanilla')
 
     """ 3.2 PCA """
     clf_pca = KNeighborsClassifier(n_neighbors=52)
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     print("clf.score             : {0:.3f}".format(clf_pca.score(x_train_pca, y_train)))
     print("clf.score             : {0:.3f}".format(clf_pca.score(x_test_pca, y_test)))
     # print("(pred == y_test) score: {0:.3f}".format((prediction_pca == y_test).mean()))
-    visualize_confusion_matrix(y_test, prediction_pca, 'Reconstruction: PCA')
+    visualize_confusion_matrix(y_test, prediction_pca, 'Reconstruction_PCA')
 
     """ 3.3 PCA + LDA """
     clf_lda = KNeighborsClassifier(n_neighbors=52)
@@ -84,4 +84,4 @@ if __name__ == '__main__':
     print("clf.score             : {0:.3f}".format(clf_lda.score(x_train_lda, y_train)))
     print("clf.score             : {0:.3f}".format(clf_lda.score(x_test_lda, y_test)))
     # print("(pred == y_test) score: {0:.3f}".format(np.mean((prediction_lda == y_test))))
-    visualize_confusion_matrix(y_test, prediction_lda, 'Reconstruction: LDA')
+    visualize_confusion_matrix(y_test, prediction_lda, 'Reconstruction_LDA')
