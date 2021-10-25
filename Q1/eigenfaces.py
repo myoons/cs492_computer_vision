@@ -12,6 +12,7 @@ from argparse import ArgumentParser
 from utils.dataset import split_train_test
 from utils.visualize import visualize_face, visualize_faces, visualize_graph, visualize_tsne, visualize_3d
 
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument("--vis", dest="vis", action="store_true", help="Visualize images")
@@ -46,7 +47,8 @@ if __name__ == '__main__':
 
     eigenvalues, eigenvectors = eigenvalues.astype(float), np.swapaxes(eigenvectors.astype(float), 0, 1)
     sort_indices = np.argsort(eigenvalues)[::-1]
-    best_m_eigenvectors = eigenvectors[sort_indices[:args.best_m]]
+    eigenvectors = eigenvectors[sort_indices]
+    best_m_eigenvectors = eigenvectors[:args.best_m]
 
     if args.vis:
         visualize_faces(best_m_eigenvectors.astype(float), n=1, random=False, title="Best Eigenvectors")
@@ -62,7 +64,8 @@ if __name__ == '__main__':
 
     low_eigenvalues, low_eigenvectors = low_eigenvalues.astype(float), low_eigenvectors.astype(float)
     low_sort_indices = np.argsort(low_eigenvalues)[::-1]
-    low_best_m_eigenvectors = low_eigenvectors[low_sort_indices[:args.best_m]]
+    low_eigenvectors = low_eigenvectors[low_sort_indices]
+    low_best_m_eigenvectors = low_eigenvectors[:args.best_m]
 
     if args.vis:
         visualize_faces(low_best_m_eigenvectors.astype(float), n=1, random=False, title="Best Low Eigenvectors")
@@ -82,14 +85,14 @@ if __name__ == '__main__':
 
     """ Train Reconstruction Loss """
     train_reconstruction_losses = []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = eigenvectors[sort_indices[:m]]
+    for m in trange(1, dataset["train_faces"].shape[0]):
+        m_eigenvectors = eigenvectors[:m]
         reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         train_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
 
     train_low_reconstruction_losses = []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
+    for m in trange(1, dataset["train_faces"].shape[0]):
+        m_eigenvectors = low_eigenvectors[:m]
         reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         train_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
 
@@ -97,34 +100,34 @@ if __name__ == '__main__':
     test_subtracted_faces = dataset["test_faces"] - average_face
 
     test_reconstruction_losses = []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = eigenvectors[sort_indices[:m]]
+    for m in trange(1, dataset["train_faces"].shape[0]):
+        m_eigenvectors = eigenvectors[:m]
         reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         test_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
 
     test_low_reconstruction_losses = []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
+    for m in trange(1, dataset["train_faces"].shape[0]):
+        m_eigenvectors = low_eigenvectors[:m]
         reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         test_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
 
     """ Visualize Reconstruction Losses """
     if args.vis:
-        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0] + 1),
+        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0]),
                         y_axes=[train_reconstruction_losses, train_low_reconstruction_losses],
                         xlabel="M",
                         ylabel="Reconstruction Train Loss",
                         legend=['Original', 'Low Computation'],
                         title="Reconstruction Train Loss")
 
-        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0] + 1),
+        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0]),
                         y_axes=[test_reconstruction_losses, test_low_reconstruction_losses],
                         xlabel="M",
                         ylabel="Reconstruction Test Loss",
                         legend=['Original', 'Low Computation'],
                         title="Reconstruction Test Loss")
 
-        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0] + 1),
+        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0]),
                         y_axes=[train_reconstruction_losses,
                                 train_low_reconstruction_losses,
                                 test_reconstruction_losses,
@@ -155,7 +158,7 @@ if __name__ == '__main__':
     max_accuracy = 0
     max_accuracy_eigenvectors = None
     max_accuracy_target, max_accuracy_nn = [], []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+    for m in trange(1, dataset["train_faces"].shape[0]):
         m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
         train_projected = subtracted_faces @ m_eigenvectors.T
         test_projected = test_subtracted_faces @ m_eigenvectors.T
@@ -182,7 +185,7 @@ if __name__ == '__main__':
         list_accuracy.append(accuracy)
 
     if args.vis:
-        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0] + 1),
+        visualize_graph(x_axis=np.arange(1, dataset["train_faces"].shape[0]),
                         y_axes=[list_accuracy],
                         xlabel="M",
                         ylabel="Identity Recognition Test Accuracy",
@@ -202,7 +205,7 @@ if __name__ == '__main__':
         visualize_faces(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
 
     """ 3-Dimension Projection (M=3) """
-    m_eigenvectors = low_eigenvectors[low_sort_indices[:3]]
+    m_eigenvectors = low_eigenvectors[:3]
     train_projected = subtracted_faces @ m_eigenvectors.T
     test_projected = test_subtracted_faces @ m_eigenvectors.T
 
