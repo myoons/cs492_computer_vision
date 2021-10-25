@@ -5,23 +5,21 @@ from sklearn.manifold import TSNE
 
 def visualize_face(face, shape=(46, 56), title=None):
     face = np.swapaxes(np.reshape(face, shape), 0, 1)
+    plt.imshow(face, cmap='gray')
 
     if title is not None:
         plt.title(title)
         plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
     else:
-        plt.imshow(face, cmap='gray')
         plt.show()
 
     plt.close()
 
 
-def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, title=None):
+def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2):
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
 
-    cols = 5
-    rows = 2
     for i in range(n):
 
         axes = []
@@ -29,13 +27,14 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
         if title is not None:
             fig.suptitle(title, fontsize=20)
 
-        if faces.shape[0] < 10:
+        n = rows * cols
+        if faces.shape[0] < n:
             indices = np.arange(faces.shape[0])
         else:
             if random:
-                indices = np.random.choice(faces.shape[0], 10, replace=False)
+                indices = np.random.choice(faces.shape[0], n, replace=False)
             else:
-                indices = 10 * i + np.arange(10)
+                indices = n * i + np.arange(n)
 
         for pos, idx in enumerate(indices):
             face = np.swapaxes(np.reshape(faces[idx], shape), 0, 1)
@@ -93,3 +92,27 @@ def visualize_tsne(data, identities, title=None):
         plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
     else:
         plt.show()
+
+    plt.close()
+
+
+def visualize_3d(projections, identities, title=None):
+    assert projections.shape[0] == identities.shape[0]
+
+    fig = plt.figure(figsize=(16, 10))
+    ax = fig.add_subplot(projection='3d')
+    ax.scatter3D(projections[:, 0], projections[:, 1], projections[:, 2],
+                 c=identities,
+                 alpha=0.8)
+
+    ax.set_xlabel('X-axis', fontweight='bold')
+    ax.set_ylabel('Y-axis', fontweight='bold')
+    ax.set_zlabel('Z-axis', fontweight='bold')
+
+    if title is not None:
+        plt.title(title)
+        plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
+    else:
+        plt.show()
+
+    plt.close()
