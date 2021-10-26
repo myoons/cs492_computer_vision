@@ -85,20 +85,6 @@ if __name__ == '__main__':
 
     """ Train Reconstruction Loss """
     train_reconstruction_losses = []
-<<<<<<< HEAD
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = eigenvectors[sort_indices[:m]]
-        reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
-        train_reconstruction_losses.append(
-            np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
-
-    train_low_reconstruction_losses = []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
-        reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
-        train_low_reconstruction_losses.append(
-            np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
-=======
     for m in trange(1, dataset["train_faces"].shape[0]):
         m_eigenvectors = eigenvectors[:m]
         reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
@@ -109,26 +95,11 @@ if __name__ == '__main__':
         m_eigenvectors = low_eigenvectors[:m]
         reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         train_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
->>>>>>> 9036723ace96168e562b6db521ed25fe8f6e5065
 
     """ Test Reconstruction Loss """
     test_subtracted_faces = dataset["test_faces"] - average_face
 
     test_reconstruction_losses = []
-<<<<<<< HEAD
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = eigenvectors[sort_indices[:m]]
-        reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
-        test_reconstruction_losses.append(
-            np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
-
-    test_low_reconstruction_losses = []
-    for m in trange(1, dataset["train_faces"].shape[0] + 1):
-        m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
-        reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
-        test_low_reconstruction_losses.append(
-            np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
-=======
     for m in trange(1, dataset["train_faces"].shape[0]):
         m_eigenvectors = eigenvectors[:m]
         reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
@@ -139,7 +110,6 @@ if __name__ == '__main__':
         m_eigenvectors = low_eigenvectors[:m]
         reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         test_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
->>>>>>> 9036723ace96168e562b6db521ed25fe8f6e5065
 
     """ Visualize Reconstruction Losses """
     if args.vis:
@@ -211,7 +181,6 @@ if __name__ == '__main__':
             max_accuracy_target = target
             max_accuracy_nn = predict
             max_accuracy_eigenvectors = m_eigenvectors
-
         list_accuracy.append(accuracy)
 
     if args.vis:
