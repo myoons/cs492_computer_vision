@@ -14,6 +14,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler
 from mpl_toolkits.mplot3d import Axes3D
+from Q3.utils.visualize import visualize_faces_with_row_label
 
 
 from utils.dataset import split_train_test
@@ -174,6 +175,19 @@ if __name__ == '__main__':
     fail_case = np.where(prediction_lda != y_test)[0]
     visualize_faces(faces=np.array(x_test[success_case[0:3]]), n=1, title="success_case_lda", cols=3, rows=1)
     visualize_faces(faces=np.array(x_test[fail_case[0:3]]), n=1, title="fail_case_lda", cols=3, rows=1)
+
+    indices = np.random.choice(len(max_accuracy_target), 5, replace=False)
+
+    target = np.array(max_accuracy_target)[indices]
+    target_reconstructed = average_face + (target @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
+    nearest_neighbor = np.array(max_accuracy_nn)[indices]
+    nearest_neighbor_reconstructed = average_face + (
+                nearest_neighbor @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
+
+    inp = np.concatenate([target, target_reconstructed, nearest_neighbor, nearest_neighbor_reconstructed], axis=0)
+    visualize_faces_with_row_label(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
+
+
 
     """ Measure Reconstruction Accuracies """
     # reconstruction_accuracies(dataset=dataset)
