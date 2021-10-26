@@ -112,7 +112,7 @@ def qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig, eig_L
 
 def main():
     # Data
-    mat = scipy.io.loadmat('face.mat')
+    mat = scipy.io.loadmat('Q1/face.mat')
     H = 46
     W = 56
     D = H * W
@@ -132,29 +132,37 @@ def main():
     x = x_train - x_mean  # N, D
     x = x.T  # D, N
 
-    # Training Method 1
-    start = time.time()
-    cov_x = (x @ x.T) / N  # D, D
-    eig_values, eig_vectors = np.linalg.eig(cov_x, )
-    eig_values = np.real(eig_values)
-    eig_vectors = np.real(eig_vectors)
-    idx = eig_values.argsort()[::-1]
-    eig_values = eig_values[idx]
-    eig_vectors = eig_vectors[:, idx]
-    print("time (Original PCA):", time.time() - start)
+    time_original = []
+    time_LC = []
+    for i in range(30):
+        # Training Method 1
+        start = time.time()
+        cov_x = (x @ x.T) / N  # D, D
+        eig_values, eig_vectors = np.linalg.eig(cov_x, )
+        eig_values = np.real(eig_values)
+        eig_vectors = np.real(eig_vectors)
+        idx = eig_values.argsort()[::-1]
+        eig_values = eig_values[idx]
+        eig_vectors = eig_vectors[:, idx]
+        # print("time (Original PCA):", time.time() - start)
+        time_original.append(time.time() - start)
 
-    # Training Method 2 - low computation
-    start = time.time()
-    cov_x_LC = (x.T @ x) / N
-    eig_values_LC, eig_vectors_LC = np.linalg.eig(cov_x_LC, )
-    eig_values_LC = np.real(eig_values_LC)
-    eig_vectors_LC = np.real(eig_vectors_LC)
-    idx = eig_values_LC.argsort()[::-1]
-    eig_values_LC = eig_values_LC[idx]
-    eig_vectors_LC = eig_vectors_LC[:, idx]
-    eig_vectors_LC = x @ eig_vectors_LC
-    eig_vectors_LC = eig_vectors_LC / np.linalg.norm(eig_vectors_LC, axis=0)
-    print("time (Low Computation):", time.time() - start)
+        # Training Method 2 - low computation
+        start = time.time()
+        cov_x_LC = (x.T @ x) / N
+        eig_values_LC, eig_vectors_LC = np.linalg.eig(cov_x_LC, )
+        eig_values_LC = np.real(eig_values_LC)
+        eig_vectors_LC = np.real(eig_vectors_LC)
+        idx = eig_values_LC.argsort()[::-1]
+        eig_values_LC = eig_values_LC[idx]
+        eig_vectors_LC = eig_vectors_LC[:, idx]
+        eig_vectors_LC = x @ eig_vectors_LC
+        eig_vectors_LC = eig_vectors_LC / np.linalg.norm(eig_vectors_LC, axis=0)
+        # print("time (Low Computation):", time.time() - start)
+        time_LC.append(time.time() - start)
+    print("time (Original PCA):", np.mean(np.array(time_original)))
+    print("time (Low Computation):", np.mean(np.array(time_LC)))
+
 
     # Difference of Two Methods in EigenVector, EigenValue
     # ====================================================================
@@ -209,7 +217,7 @@ def main():
     # ====================================================================
 
     # Reconstruction for Qualitative Comparison
-    qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig_vectors, eig_vectors_LC)
+    # qualitative_comparison_of_Reconstruction(x_train, x_test, x_mean, eig_vectors, eig_vectors_LC)
 
 
 if __name__ == "__main__":
