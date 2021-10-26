@@ -181,7 +181,6 @@ if __name__ == '__main__':
             max_accuracy_target = target
             max_accuracy_nn = predict
             max_accuracy_eigenvectors = m_eigenvectors
-
         list_accuracy.append(accuracy)
 
     if args.vis:
