@@ -1,6 +1,5 @@
 import warnings
 
-warnings.filterwarnings("ignore")
 
 import time
 import numpy as np
@@ -11,6 +10,7 @@ from argparse import ArgumentParser
 
 from utils.dataset import split_train_test
 from utils.visualize import visualize_face, visualize_faces, visualize_graph, visualize_tsne, visualize_3d
+warnings.filterwarnings("ignore")
 
 
 if __name__ == '__main__':
@@ -85,6 +85,20 @@ if __name__ == '__main__':
 
     """ Train Reconstruction Loss """
     train_reconstruction_losses = []
+<<<<<<< HEAD
+    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+        m_eigenvectors = eigenvectors[sort_indices[:m]]
+        reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
+        train_reconstruction_losses.append(
+            np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
+
+    train_low_reconstruction_losses = []
+    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+        m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
+        reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
+        train_low_reconstruction_losses.append(
+            np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
+=======
     for m in trange(1, dataset["train_faces"].shape[0]):
         m_eigenvectors = eigenvectors[:m]
         reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
@@ -95,11 +109,26 @@ if __name__ == '__main__':
         m_eigenvectors = low_eigenvectors[:m]
         reconstructed = average_face + (subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         train_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["train_faces"], axis=1), axis=0))
+>>>>>>> 9036723ace96168e562b6db521ed25fe8f6e5065
 
     """ Test Reconstruction Loss """
     test_subtracted_faces = dataset["test_faces"] - average_face
 
     test_reconstruction_losses = []
+<<<<<<< HEAD
+    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+        m_eigenvectors = eigenvectors[sort_indices[:m]]
+        reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
+        test_reconstruction_losses.append(
+            np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
+
+    test_low_reconstruction_losses = []
+    for m in trange(1, dataset["train_faces"].shape[0] + 1):
+        m_eigenvectors = low_eigenvectors[low_sort_indices[:m]]
+        reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T) @ m_eigenvectors
+        test_low_reconstruction_losses.append(
+            np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
+=======
     for m in trange(1, dataset["train_faces"].shape[0]):
         m_eigenvectors = eigenvectors[:m]
         reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
@@ -110,6 +139,7 @@ if __name__ == '__main__':
         m_eigenvectors = low_eigenvectors[:m]
         reconstructed = average_face + (test_subtracted_faces @ m_eigenvectors.T)  @ m_eigenvectors
         test_low_reconstruction_losses.append(np.average(linalg.norm(reconstructed - dataset["test_faces"], axis=1), axis=0))
+>>>>>>> 9036723ace96168e562b6db521ed25fe8f6e5065
 
     """ Visualize Reconstruction Losses """
     if args.vis:
@@ -197,9 +227,10 @@ if __name__ == '__main__':
         indices = np.random.choice(len(max_accuracy_target), 5, replace=False)
 
         target = np.array(max_accuracy_target)[indices]
-        target_reconstructed = average_face + (target @ max_accuracy_eigenvectors.T)  @ max_accuracy_eigenvectors
+        target_reconstructed = average_face + (target @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
         nearest_neighbor = np.array(max_accuracy_nn)[indices]
-        nearest_neighbor_reconstructed = average_face + (nearest_neighbor @ max_accuracy_eigenvectors.T)  @ max_accuracy_eigenvectors
+        nearest_neighbor_reconstructed = average_face + (
+                    nearest_neighbor @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
 
         inp = np.concatenate([target, target_reconstructed, nearest_neighbor, nearest_neighbor_reconstructed], axis=0)
         visualize_faces(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
@@ -212,11 +243,10 @@ if __name__ == '__main__':
     if args.vis:
         n_identities = 5
 
-        visualize_3d(projections=train_projected[:n_identities*8],
-                     identities=dataset["train_identities"][:n_identities*8],
+        visualize_3d(projections=train_projected[:n_identities * 8],
+                     identities=dataset["train_identities"][:n_identities * 8],
                      title="Train Faces 3D projected (M=3)")
 
-        visualize_3d(projections=test_projected[:n_identities*2],
-                     identities=dataset["test_identities"][:n_identities*2],
+        visualize_3d(projections=test_projected[:n_identities * 2],
+                     identities=dataset["test_identities"][:n_identities * 2],
                      title="Test Faces 3D projected (M=3)")
-
