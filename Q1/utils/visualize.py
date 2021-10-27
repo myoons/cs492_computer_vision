@@ -54,10 +54,12 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
     plt.close()
 
 
-def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2):
+def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, rows_label=None):
+    if rows_label is not None:
+        assert(len(rows_label)==rows)
+    
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
-    rows_label = ['target_image', 'target_neighbor', 'predicted_image', 'nearest_neighbor']
 
     for i in range(n):
   

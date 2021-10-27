@@ -191,8 +191,8 @@ if __name__ == '__main__':
                         legend=['Test'],
                         title="Identity Recognition (NN) Test Accuracy")
 
-    # if args.vis:
-    if True:
+    # if True:
+    if args.vis:
         assert len(max_accuracy_target) == len(max_accuracy_nn)
         indices = np.random.choice(len(max_accuracy_target), 5, replace=False)
 
@@ -203,7 +203,9 @@ if __name__ == '__main__':
                     nearest_neighbor @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
 
         inp = np.concatenate([target, target_reconstructed, nearest_neighbor, nearest_neighbor_reconstructed], axis=0)
-        visualize_faces_with_row_label(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
+    
+        visualize_faces_with_row_label(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases",
+                rows_label=['target_image', 'target_neighbor', 'predicted_image', 'nearest_neighbor'] )
 
     """ 3-Dimension Projection (M=3) """
     m_eigenvectors = low_eigenvectors[:3]
