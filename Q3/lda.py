@@ -1,6 +1,10 @@
 import warnings
 import time
 import numpy as np
+from numpy.core.numeric import indices
+import psutil
+import os
+
 
 from scipy import io
 from tqdm import trange
@@ -24,7 +28,23 @@ from utils.visualize import visualize_faces
 warnings.filterwarnings("ignore")
 
 
-def reconstruction_accuracies(dataset):
+def check_memory(title):
+    
+    print("== " + title)
+    # general RAM usage
+    memory_usage_dict = dict(psutil.virtual_memory()._asdict())
+    memory_usage_percent = memory_usage_dict['percent']
+    print(f"memory_usage_percent: {memory_usage_percent}%")
+    # current process RAM usage
+    pid = os.getpid()
+    current_process = psutil.Process(pid)
+    current_process_memory_usage_as_KB = current_process.memory_info()[0] / 2.**20
+    print(f"Current memory KB   : {current_process_memory_usage_as_KB: 9.3f} KB")
+    
+    print("--"*30)
+
+
+def recognition_accuracies(dataset):
     x_train = dataset["train_faces"]
     y_train = dataset["train_identities"]
     x_test = dataset["test_faces"]
@@ -68,7 +88,7 @@ def reconstruction_accuracies(dataset):
     plt.title('Train')
     plt.xlabel('M_lda')
     plt.ylabel('M_pca')
-    plt.savefig('Q3/figures/Train_Reconstruction_Loss.png')
+    plt.savefig('Q3/figures/Train_Recognition_Loss.png')
     plt.show()
 
     plt.figure(figsize=(6, 6))
@@ -77,7 +97,7 @@ def reconstruction_accuracies(dataset):
     plt.title('Test')
     plt.xlabel('M_pca')
     plt.ylabel('M_lda')
-    plt.savefig('Q3/figures/Test_Reconstruction_Loss.png')
+    plt.savefig('Q3/figures/Test_Recognition_Loss.png')
     plt.show()
 
 
@@ -130,64 +150,76 @@ if __name__ == '__main__':
     
     """ 3. NN Classification """
     """ 3.1 Vanilla """
+    check_memory("Vanilla_Before_Recognition")
     start = time.time()
     clf = KNeighborsClassifier(n_neighbors=52)
     clf.fit(x_train, y_train)
     prediction = clf.predict(x_test)
     calculation_time['clf_vanilla'] = time.time() - start
-    print("clf.score             : {0:.3f}".format(clf.score(x_train, y_train)))
-    print("clf.score             : {0:.3f}".format(clf.score(x_test, y_test)))
+    check_memory("Vanilla_After_Recognition")
+    # print("clf.score             : {0:.3f}".format(clf.score(x_train, y_train)))
+    # print("clf.score             : {0:.3f}".format(clf.score(x_test, y_test)))
     
-    success_case = np.where(prediction == y_test)[0]
-    fail_case = np.where(prediction != y_test)[0]
-    visualize_faces(faces=np.array(x_test[success_case[0:3]]), n=1, title="success_case_vanilla", cols=3, rows=1)
-    visualize_faces(faces=np.array(x_test[fail_case[0:3]]), n=1, title="fail_case_vanilla", cols=3, rows=1)
+    # success_case = np.where(prediction == y_test)[0]
+    # fail_case = np.where(prediction != y_test)[0]
+    # visualize_faces(faces=np.array(x_test[success_case[0:3]]), n=1, title="success_case_vanilla", cols=3, rows=1)
+    # visualize_faces(faces=np.array(x_test[fail_case[0:3]]), n=1, title="fail_case_vanilla", cols=3, rows=1)
 
     # print("(pred == y_test) score: {0:.3f}".format((prediction == y_test).mean()))
-    # visualize_confusion_matrix(y_test, prediction, 'Reconstruction_Vanilla')
+    # visualize_confusion_matrix(y_test, prediction, 'Recognition_Vanilla')
     
-    """ 3.2 PCA """
+    # """ 3.2 PCA """
+    check_memory("PCA_Before_Recognition")
     start = time.time()
     clf_pca = KNeighborsClassifier(n_neighbors=52)
     clf_pca.fit(x_train_pca, y_train)
     prediction_pca = clf_pca.predict(x_test_pca)
     calculation_time['clf_pca'] = time.time() - start
-    print("clf.score             : {0:.3f}".format(clf_pca.score(x_train_pca, y_train)))
-    print("clf.score             : {0:.3f}".format(clf_pca.score(x_test_pca, y_test)))
-    # print("(pred == y_test) score: {0:.3f}".format((prediction_pca == y_test).mean()))
-    # visualize_confusion_matrix(y_test, prediction_pca, 'Reconstruction_PCA')
-    success_case = np.where(prediction_pca == y_test)[0]
-    fail_case = np.where(prediction_pca != y_test)[0]
-    visualize_faces(faces=np.array(x_test[success_case[0:3]]), n=1, title="success_case_pca", cols=3, rows=1)
-    visualize_faces(faces=np.array(x_test[fail_case[0:3]]), n=1, title="fail_case_pca", cols=3, rows=1)
+    check_memory("PCA_After_Recognition")
+    # print("clf.score             : {0:.3f}".format(clf_pca.score(x_train_pca, y_train)))
+    # print("clf.score             : {0:.3f}".format(clf_pca.score(x_test_pca, y_test)))
+    # # print("(pred == y_test) score: {0:.3f}".format((prediction_pca == y_test).mean()))
+    # # visualize_confusion_matrix(y_test, prediction_pca, 'Recognition_PCA')
+    # success_case = np.where(prediction_pca == y_test)[0]
+    # fail_case = np.where(prediction_pca != y_test)[0]
+    # visualize_faces(faces=np.array(x_test[success_case[0:3]]), n=1, title="success_case_pca", cols=3, rows=1)
+    # visualize_faces(faces=np.array(x_test[fail_case[0:3]]), n=1, title="fail_case_pca", cols=3, rows=1)
 
-    """ 3.3 PCA + LDA """
+
+    # """ 3.3 PCA + LDA """
+    check_memory("LDA_Before_Recognition")
     start = time.time()
     clf_lda = KNeighborsClassifier(n_neighbors=52)
     clf_lda.fit(x_train_lda, y_train)
     prediction_lda = clf_lda.predict(x_test_lda)
     calculation_time['clf_lda'] = time.time() - start
-    print("clf.score             : {0:.3f}".format(clf_lda.score(x_train_lda, y_train)))
-    print("clf.score             : {0:.3f}".format(clf_lda.score(x_test_lda, y_test)))
-    # print("(pred == y_test) score: {0:.3f}".format(np.mean((prediction_lda == y_test))))
-    # visualize_confusion_matrix(y_test, prediction_lda, 'Reconstruction_LDA')
+    check_memory("LDA_After_Recognition")
+    
+    # print("clf.score             : {0:.3f}".format(clf_lda.score(x_train_lda, y_train)))
+    # print("clf.score             : {0:.3f}".format(clf_lda.score(x_test_lda, y_test)))
+    # # print("(pred == y_test) score: {0:.3f}".format(np.mean((prediction_lda == y_test))))
+    # # visualize_confusion_matrix(y_test, prediction_lda, 'Recognition_LDA')
     success_case = np.where(prediction_lda == y_test)[0]
+    success_indices = np.random.choice(len(success_case), 5, replace=False)
+    success_images = np.array(x_test[success_indices])
+
     fail_case = np.where(prediction_lda != y_test)[0]
-    visualize_faces(faces=np.array(x_test[success_case[0:3]]), n=1, title="success_case_lda", cols=3, rows=1)
-    visualize_faces(faces=np.array(x_test[fail_case[0:3]]), n=1, title="fail_case_lda", cols=3, rows=1)
+    fail_indices = np.random.choice(len(fail_case), 5, replace=False)
+    fail_indices_target = prediction_lda[indices]
+    fail_images = np.concatenate([x_test[fail_indices], x_test[fail_indices_target]], axis=0)
 
-    indices = np.random.choice(len(max_accuracy_target), 5, replace=False)
-
-    target = np.array(max_accuracy_target)[indices]
-    target_reconstructed = average_face + (target @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
-    nearest_neighbor = np.array(max_accuracy_nn)[indices]
-    nearest_neighbor_reconstructed = average_face + (
-                nearest_neighbor @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
-
-    inp = np.concatenate([target, target_reconstructed, nearest_neighbor, nearest_neighbor_reconstructed], axis=0)
-    visualize_faces_with_row_label(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
+    visualize_faces(faces=success_images, n=1, title="success_case_lda", cols=5, rows=1)
+    visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_lda", cols=5, rows=2)
 
 
+    # target = np.array(max_accuracy_target)[indices]
+    # target_reconstructed = average_face + (target @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
+    # nearest_neighbor = np.array(max_accuracy_nn)[indices]
+    # nearest_neighbor_reconstructed = average_face + (
+    #             nearest_neighbor @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
 
-    """ Measure Reconstruction Accuracies """
-    # reconstruction_accuracies(dataset=dataset)
+    # inp = np.concatenate([target, target_reconstructed, nearest_neighbor, nearest_neighbor_reconstructed], axis=0)
+    # visualize_faces_with_row_label(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
+
+    """ Measure Recognition Accuracies """
+    # recognition_accuracies(dataset=dataset)
