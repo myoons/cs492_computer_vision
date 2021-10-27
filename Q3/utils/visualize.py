@@ -3,6 +3,23 @@ from scipy import io
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
+
+def visualize_graph(x_axis, y_axes, xlabel, ylabel, legend, title=None):
+    for y in y_axes:
+        plt.plot(x_axis, y)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend(legend)
+
+    if title is not None:
+        plt.title(title)
+        plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
+    else:
+        plt.show()
+
+    plt.close()
+
 def visualize_confusion_matrix(y_test, prediction, title):
     cm = confusion_matrix(y_test, prediction)
     fig = plt.figure()

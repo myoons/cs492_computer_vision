@@ -25,6 +25,7 @@ from utils.dataset import split_train_test
 from utils.visualize import visualize_confusion_matrix
 from utils.visualize import visualize_faces
 from utils.visualize import visualize_face
+from utils.visualize import visualize_graph
 
 warnings.filterwarnings("ignore")
 
@@ -43,6 +44,66 @@ def check_memory(title):
     print(f"Current memory KB   : {current_process_memory_usage_as_KB: 9.3f} KB")
     
     print("--"*30)
+
+
+
+def recognition_accuracy_lda(dataset):
+    x_train = dataset["train_faces"]
+    y_train = dataset["train_identities"]
+    x_test = dataset["test_faces"]
+    y_test = dataset["test_identities"]
+    sc = StandardScaler()
+    x_train = sc.fit_transform(x_train)
+    x_test = sc.transform(x_test)
+
+    test_accuracy = np.zeros((52))
+    train_accuracy = np.zeros((52))
+    # x = np.linspace(1, 365, num=365)
+    x = np.linspace(1, 52, num=52)
+    # x, y = np.meshgrid(x, y)
+
+    for i_lda in range(1, 52):
+        # for i_pca in range(i_lda, 365, 10):
+            # """ 1. PCA """
+            # pca = PCA(n_components=i_pca)
+            # x_train_pca = pca.fit(x_train).transform(x_train)
+            # x_test_pca = pca.transform(x_test)
+    
+            """ 2. LDA """
+            lda = LinearDiscriminantAnalysis(n_components=i_lda)
+            x_train_lda = lda.fit(x_train, y_train).transform(x_train)
+            x_test_lda = lda.transform(x_test)
+    
+            """ 3.3 PCA + LDA """
+            clf_lda = KNeighborsClassifier(n_neighbors=52)
+            clf_lda.fit(x_train_lda, y_train)
+            train_accuracy[i_lda] = clf_lda.score(x_train_lda, y_train)
+            test_accuracy[i_lda] = clf_lda.score(x_test_lda, y_test)
+    # max_x = np.argmax(train_accuracy, axis=0)
+    # max_y = np.argmax(train_accuracy, axis=1)
+    # max_x_test = np.argmax(test_accuracy, axis=0)
+    # max_y_test = np.argmax(test_accuracy, axis=1)
+    visualize_graph(x_axis=x, y_axes=[train_accuracy, test_accuracy], 
+                    xlabel='M_lda', ylabel='Accurcy', legend=['Train', 'Test'], title='LDA Recognition Accuracy')
+
+
+    # plt.figure(figsize=(6, 6))
+    # ax = plt.subplot(1, 1, 1, projection='3d')
+    # ax.plot_surface(x, y, train_accuracy, alpha=0.3, color='blue', edgecolor='blue')
+    # plt.title('Train')
+    # plt.xlabel('M_lda')
+    # plt.ylabel('M_pca')
+    # plt.savefig('Q3/figures/Train_Recognition_Accuracy.png')
+    # plt.show()
+
+    # plt.figure(figsize=(6, 6))
+    # ax = plt.subplot(1, 1, 1, projection='3d')
+    # ax.plot_surface(x, y, test_accuracy, alpha=0.3, color='blue', edgecolor='blue')
+    # plt.title('Test')
+    # plt.xlabel('M_pca')
+    # plt.ylabel('M_lda')
+    # plt.savefig('Q3/figures/Test_Recognition_Accuracy.png')
+    # plt.show()
 
 
 def recognition_accuracies(dataset):
@@ -89,7 +150,7 @@ def recognition_accuracies(dataset):
     plt.title('Train')
     plt.xlabel('M_lda')
     plt.ylabel('M_pca')
-    plt.savefig('Q3/figures/Train_Recognition_Loss.png')
+    plt.savefig('Q3/figures/Train_Recognition_Accuracy.png')
     plt.show()
 
     plt.figure(figsize=(6, 6))
@@ -98,7 +159,7 @@ def recognition_accuracies(dataset):
     plt.title('Test')
     plt.xlabel('M_pca')
     plt.ylabel('M_lda')
-    plt.savefig('Q3/figures/Test_Recognition_Loss.png')
+    plt.savefig('Q3/figures/Test_Recognition_Accuracy.png')
     plt.show()
 
 
@@ -114,8 +175,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    face_data = io.loadmat('Q3/data/face.mat')
-    # face_data = io.loadmat('data/face.mat')
+    # face_data = io.loadmat('Q3/data/face.mat')
+    face_data = io.loadmat('data/face.mat')
     faces, identities = face_data['X'], face_data['l']
 
     """ Split Dataset """
@@ -280,7 +341,8 @@ if __name__ == '__main__':
 
     """ 4. Measure Recognition Accuracies """
     # recognition_accuracies(dataset=dataset)
-    
+    recognition_accuracy_lda(dataset=dataset)
+
     """ 5. Calculation Time """
     for key, value in calculation_time.items():
       print("Calculation Time " + key + ": ", value)
