@@ -12,7 +12,7 @@ def visualize_confusion_matrix(y_test, prediction, title):
     plt.xlabel('Predicted')
     plt.ylabel('Target')
     plt.title(title)
-    plt.savefig("Q3/figures/" + title + ".png")
+    plt.savefig("figures/" + title + ".png")
     # plt.show()
 
 def visualize_face(face, shape=(46, 56), title=None):
@@ -21,7 +21,7 @@ def visualize_face(face, shape=(46, 56), title=None):
 
     if title is not None:
         plt.title(title)
-        plt.savefig("Q3/figures/" + title + ".png")
+        plt.savefig("figures/" + title + ".png")
     else:
         plt.show()
 
@@ -59,7 +59,7 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
             plt.imshow(face, cmap='gray')
 
         if title:
-          plt.savefig("Q3/figures/" + title + ".png")
+          plt.savefig("figures/" + title + ".png")
         else:
             plt.show()
 
