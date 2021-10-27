@@ -38,7 +38,7 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
 
         for pos, idx in enumerate(indices):
             face = np.swapaxes(np.reshape(faces[idx], shape), 0, 1)
-            axes.append(fig.add_subplot(rows, cols, pos+1))
+            axes.append(fig.add_subplot(rows, cols, pos + 1))
 
             if identities is not None:
                 identity = str(identities[idx])
@@ -62,7 +62,7 @@ def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, ide
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
 
     for i in range(n):
-  
+
         axes = []
         fig = plt.figure(figsize=(20, 10), dpi=100)
         if title is not None:
@@ -80,11 +80,11 @@ def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, ide
         row_idx = 0
         for pos, idx in enumerate(indices):
             face = np.swapaxes(np.reshape(faces[idx], shape), 0, 1)
-            ax = fig.add_subplot(rows, cols, pos+1)
-            
-            if(idx % cols == 0):
-              ax.set_ylabel(rows_label[row_idx])
-              row_idx += 1
+            ax = fig.add_subplot(rows, cols, pos + 1)
+
+            if idx % cols == 0:
+                ax.set_ylabel(rows_label[row_idx])
+                row_idx += 1
 
             axes.append(ax)
 
@@ -100,7 +100,6 @@ def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, ide
             plt.show()
 
     plt.close()
-
 
 
 def visualize_graph(x_axis, y_axes, xlabel, ylabel, legend, title=None):

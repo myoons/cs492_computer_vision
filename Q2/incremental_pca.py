@@ -41,17 +41,16 @@ if __name__ == '__main__':
         start = time.time()
         pca.fit(dataset["train_faces"])
         computation_time['pca'].append(time.time() - start)
-        train_pca = pca.transform(dataset["train_faces"])
+        projected_pca = pca.transform(dataset["train_faces"])
 
-        reconstructed_pca = pca.inverse_transform(train_pca)
+        reconstructed_pca = pca.inverse_transform(projected_pca)
         reconstruction_loss = np.average(linalg.norm(reconstructed_pca - dataset["train_faces"], axis=1), axis=0)
         reconstruction_losses['pca'].append(reconstruction_loss)
 
         correct = 0
-        test_subtracted_faces = dataset["test_faces"] - pca.mean_
-        test_projected = test_subtracted_faces @ pca.components_.T
+        test_projected = pca.transform(dataset["test_faces"])
         for idx in range(test_projected.shape[0]):
-            dist = linalg.norm(test_projected[idx] - train_pca, axis=1)
+            dist = linalg.norm(test_projected[idx] - projected_pca, axis=1)
             min_distance_idx = np.argmin(dist)
 
             if dataset["test_identities"][idx] == dataset["train_identities"][min_distance_idx]:
@@ -65,17 +64,16 @@ if __name__ == '__main__':
         start = time.time()
         first_pca.partial_fit(first_subset)
         computation_time['first_subset'].append(time.time() - start)
-        train_first_pca = first_pca.transform(dataset["train_faces"])
+        projected_first_pca = first_pca.transform(dataset["train_faces"])
 
-        reconstructed_first_pca = first_pca.inverse_transform(train_first_pca)
+        reconstructed_first_pca = first_pca.inverse_transform(projected_first_pca)
         reconstruction_loss = np.average(linalg.norm(reconstructed_first_pca - dataset["train_faces"], axis=1), axis=0)
         reconstruction_losses['first_subset'].append(reconstruction_loss)
 
         correct = 0
-        test_subtracted_faces = dataset["test_faces"] - first_pca.mean_
-        test_projected = test_subtracted_faces @ first_pca.components_.T
+        test_projected = first_pca.transform(dataset["test_faces"])
         for idx in range(test_projected.shape[0]):
-            dist = linalg.norm(test_projected[idx] - train_first_pca, axis=1)
+            dist = linalg.norm(test_projected[idx] - projected_first_pca, axis=1)
             min_distance_idx = np.argmin(dist)
 
             if dataset["test_identities"][idx] == dataset["train_identities"][min_distance_idx]:
@@ -87,21 +85,21 @@ if __name__ == '__main__':
         start = time.time()
         incremental_pca.fit(dataset["train_faces"])
         computation_time['incremental_pca'].append(time.time() - start)
-        train_incremental_pca = incremental_pca.transform(dataset["train_faces"])
+        projected_incremental_pca = incremental_pca.transform(dataset["train_faces"])
 
-        reconstructed_incremental_pca = incremental_pca.inverse_transform(train_incremental_pca)
+        reconstructed_incremental_pca = incremental_pca.inverse_transform(projected_incremental_pca)
         reconstruction_loss = np.average(linalg.norm(reconstructed_incremental_pca - dataset["train_faces"], axis=1), axis=0)
         reconstruction_losses['incremental_pca'].append(reconstruction_loss)
 
         correct = 0
-        test_subtracted_faces = dataset["test_faces"] - incremental_pca.mean_
-        test_projected = test_subtracted_faces @ incremental_pca.components_.T
+        test_projected = incremental_pca.transform(dataset["test_faces"])
         for idx in range(test_projected.shape[0]):
-            dist = linalg.norm(test_projected[idx] - train_incremental_pca, axis=1)
+            dist = linalg.norm(test_projected[idx] - projected_incremental_pca, axis=1)
             min_distance_idx = np.argmin(dist)
 
             if dataset["test_identities"][idx] == dataset["train_identities"][min_distance_idx]:
                 correct += 1
+
         accuracy['incremental_pca'].append(correct / test_projected.shape[0] * 100)
 
         if args.vis:
