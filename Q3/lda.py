@@ -20,12 +20,9 @@ from sklearn.preprocessing import StandardScaler
 from mpl_toolkits.mplot3d import Axes3D
 from einops import rearrange
 
-from utils.visualize import visualize_faces_with_row_label
 from utils.dataset import split_train_test
-from utils.visualize import visualize_confusion_matrix
-from utils.visualize import visualize_faces
-from utils.visualize import visualize_face
-from utils.visualize import visualize_graph
+from utils.visualize import visualize_face, visualize_faces, visualize_faces_with_row_label, visualize_graph, visualize_confusion_matrix
+
 
 warnings.filterwarnings("ignore")
 
@@ -58,53 +55,27 @@ def recognition_accuracy_lda(dataset):
 
     test_accuracy = np.zeros((52))
     train_accuracy = np.zeros((52))
-    # x = np.linspace(1, 365, num=365)
-    x = np.linspace(1, 52, num=52)
-    # x, y = np.meshgrid(x, y)
+    x = np.linspace(1, 53, num=53)
 
     for i_lda in range(1, 52):
-        # for i_pca in range(i_lda, 365, 10):
-            # """ 1. PCA """
-            # pca = PCA(n_components=i_pca)
-            # x_train_pca = pca.fit(x_train).transform(x_train)
-            # x_test_pca = pca.transform(x_test)
-    
             """ 2. LDA """
             lda = LinearDiscriminantAnalysis(n_components=i_lda)
             x_train_lda = lda.fit(x_train, y_train).transform(x_train)
             x_test_lda = lda.transform(x_test)
     
-            """ 3.3 PCA + LDA """
             clf_lda = KNeighborsClassifier(n_neighbors=52)
             clf_lda.fit(x_train_lda, y_train)
             train_accuracy[i_lda] = clf_lda.score(x_train_lda, y_train)
             test_accuracy[i_lda] = clf_lda.score(x_test_lda, y_test)
-    # max_x = np.argmax(train_accuracy, axis=0)
-    # max_y = np.argmax(train_accuracy, axis=1)
-    # max_x_test = np.argmax(test_accuracy, axis=0)
-    # max_y_test = np.argmax(test_accuracy, axis=1)
-    visualize_graph(x_axis=x, y_axes=[train_accuracy, test_accuracy], 
-                    xlabel='M_lda', ylabel='Accurcy', legend=['Train', 'Test'], title='LDA Recognition Accuracy')
 
-
-    # plt.figure(figsize=(6, 6))
-    # ax = plt.subplot(1, 1, 1, projection='3d')
-    # ax.plot_surface(x, y, train_accuracy, alpha=0.3, color='blue', edgecolor='blue')
-    # plt.title('Train')
-    # plt.xlabel('M_lda')
-    # plt.ylabel('M_pca')
-    # plt.savefig('Q3/figures/Train_Recognition_Accuracy.png')
-    # plt.show()
-
-    # plt.figure(figsize=(6, 6))
-    # ax = plt.subplot(1, 1, 1, projection='3d')
-    # ax.plot_surface(x, y, test_accuracy, alpha=0.3, color='blue', edgecolor='blue')
-    # plt.title('Test')
-    # plt.xlabel('M_pca')
-    # plt.ylabel('M_lda')
-    # plt.savefig('Q3/figures/Test_Recognition_Accuracy.png')
-    # plt.show()
-
+    plt.clf()
+    plt.plot(np.arange(52), np.array(train_accuracy))
+    plt.plot(np.arange(52), np.array(test_accuracy))
+    plt.xlabel('M_lda')
+    plt.ylabel('Recognition Accuracy')
+    plt.legend(['train', 'test'])
+    plt.savefig('figures/LDA Recognition Accuracy')
+    plt.show()
 
 def recognition_accuracies(dataset):
     x_train = dataset["train_faces"]
@@ -171,10 +142,9 @@ if __name__ == '__main__':
     parser.add_argument("--m_pca", default=52 - 1, type=int, help="Dimension in PCA")  # Number of Images - class
     parser.add_argument("--m_lda", default=52 - 1, type=int, help="Dimension in LDA")  # class - 1
 
-    parser.set_defaults(vis=False)
+    parser.set_defaults(vis=True)
 
     args = parser.parse_args()
-
     # face_data = io.loadmat('Q3/data/face.mat')
     face_data = io.loadmat('data/face.mat')
     faces, identities = face_data['X'], face_data['l']
@@ -193,14 +163,14 @@ if __name__ == '__main__':
     x_test_original = x_test.copy()
     average_face = np.average(x_train, axis=0)
 
-    # sc = StandardScaler()
-    # x_train = sc.fit_transform(x_train)
-    # x_test = sc.transform(x_test)
+    sc = StandardScaler()
+    x_train = sc.fit_transform(x_train)
+    x_test = sc.transform(x_test)
     
 
     """ 1. PCA """
     start = time.time()
-    pca = PCA(n_components=364)
+    pca = PCA(n_components=51)
     x_train_pca = pca.fit(x_train).transform(x_train)  # N, Mpca 
     x_test_pca = pca.transform(x_test)
     calculation_time['pca'] = time.time() - start
@@ -216,7 +186,7 @@ if __name__ == '__main__':
     
     """ 2. LDA """
     start = time.time()
-    n_components=3
+    n_components=51
     lda = LinearDiscriminantAnalysis(n_components=n_components)
     x_train_lda = lda.fit(x_train_pca, y_train).transform(x_train_pca)
     x_test_lda = lda.transform(x_test_pca)
@@ -263,17 +233,20 @@ if __name__ == '__main__':
     """ 3.1.1 Examples """
     diff = prediction - rearrange(y_test, 'N 1 -> N', N=104)
     success_case = np.where(diff == 0)[0]
-    success_indices = np.random.choice(len(success_case), 5, replace=False)
-    success_images = np.array(x_test_original[success_indices])
-    visualize_faces(faces=success_images, n=1, title="success_case_vanilla", cols=5, rows=1)
+    success_images = np.array(x_test_original[2*prediction[success_case[2:7]]-1])
+
+    if args.vis:
+        visualize_faces(faces=success_images, n=1, title="success_case_vanilla", cols=5, rows=1)
     fail_case = np.where(diff != 0)[0]
-    fail_indices = np.random.choice(len(fail_case), 5, replace=False)
-    fail_indices_target = prediction[fail_indices]
-    fail_images = np.concatenate([x_test_original[fail_indices_target], x_test_original[fail_indices]], axis=0)
-    visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_vanilla", cols=5, rows=2, rows_label=['Target', 'Predicted'])
+    fail_indices_target = (fail_case // 2) + 1
+    fail_images = np.concatenate([x_test_original[2*fail_indices_target[2:7]-1], x_test_original[2*prediction[fail_case[2:7]]-1]], axis=0)
+
+    if args.vis:
+        visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_vanilla", cols=5, rows=2, rows_label=['Target', 'Predicted'])
 
     """ 3.1.2 Confusion Matrix """
-    visualize_confusion_matrix(y_test, prediction, 'Recognition_Vanilla')
+    if args.vis:
+        visualize_confusion_matrix(y_test, prediction, 'Recognition_Vanilla')
     
 
     """ 3.2 PCA """
@@ -290,17 +263,18 @@ if __name__ == '__main__':
     """ 3.2.1 Examples """
     diff = prediction_pca - rearrange(y_test, 'N 1 -> N', N=104)
     success_case = np.where(diff == 0)[0]
-    success_indices = np.random.choice(len(success_case), 5, replace=False)
-    success_images = np.array(x_test_original[success_indices])
-    visualize_faces(faces=success_images, n=1, title="success_case_pca", cols=5, rows=1)
+    success_images = np.array(x_test_original[2*prediction_pca[success_case[2:7]]-1])
+    if args.vis:
+      visualize_faces(faces=success_images, n=1, title="success_case_pca", cols=5, rows=1)
     fail_case = np.where(diff != 0)[0]
-    fail_indices = np.random.choice(len(fail_case), 5, replace=False)
-    fail_indices_target = prediction_pca[fail_indices]
-    fail_images = np.concatenate([x_test_original[fail_indices_target], x_test_original[fail_indices]], axis=0)
-    visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_pca", cols=5, rows=2, rows_label=['Target', 'Predicted'])
+    fail_indices_target = (fail_case // 2) + 1
+    fail_images = np.concatenate([x_test_original[2*fail_indices_target[2:7]-1], x_test_original[2*prediction_pca[fail_case[2:7]]-1]], axis=0)
+    if args.vis:
+      visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_pca", cols=5, rows=2, rows_label=['Target', 'Predicted'])
 
     """ 3.2.2 Confusion Matrix """
-    visualize_confusion_matrix(y_test, prediction_pca, 'Recognition_PCA')
+    if args.vis:
+      visualize_confusion_matrix(y_test, prediction_pca, 'Recognition_PCA')
 
 
     """ 3.3 PCA + LDA """
@@ -317,17 +291,24 @@ if __name__ == '__main__':
     """ 3.3.1 Examples """
     diff = prediction_lda - rearrange(y_test, 'N 1 -> N', N=104)
     success_case = np.where(diff == 0)[0]
-    success_indices = np.random.choice(len(success_case), 5, replace=False)
-    success_images = np.array(x_test_original[success_indices])
-    visualize_faces(faces=success_images, n=1, title="success_case_lda", cols=5, rows=1)
+    success_images = np.array(x_test_original[2*prediction_lda[success_case[2:7]]-1])
+    if args.vis:  
+      visualize_faces(faces=success_images, n=1, title="success_case_lda", cols=5, rows=1)
     fail_case = np.where(diff != 0)[0]
-    fail_indices = np.random.choice(len(fail_case), 5, replace=False)
-    fail_indices_target = prediction_lda[fail_indices]
-    fail_images = np.concatenate([x_test_original[fail_indices_target], x_test_original[fail_indices]], axis=0)
-    visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_lda", cols=5, rows=2, rows_label=['Target', 'Predicted'])
-
+    fail_indices_target = (fail_case // 2) + 1
+    fail_images = np.concatenate([x_test_original[2*fail_indices_target[2:7]-1], x_test_original[2*prediction_lda[fail_case[2:7]]-1]], axis=0)
+    if args.vis:  
+      visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_lda", cols=5, rows=2, rows_label=['Target', 'Predicted'])
+    
+    fail_case = np.where(prediction_lda == 4)[0]
+    fail_indices_target = (fail_case // 2) + 1
+    fail_images = np.concatenate([x_test_original[2*fail_indices_target[2:7]-1], x_test_original[2*prediction_lda[fail_case[2:7]]-1]], axis=0)
+    # if args.vis:  
+    visualize_faces_with_row_label(faces=fail_images, n=1, title="fail_case_lda_4", cols=5, rows=2, rows_label=['Target', 'Predicted'])
+    # visualize_face(x_test_original[6])  #identity 4
     """ 3.3.2 Confusion Matrix """
-    visualize_confusion_matrix(y_test, prediction_lda, 'Recognition_LDA')
+    if args.vis:  
+      visualize_confusion_matrix(y_test, prediction_lda, 'Recognition_LDA')
 
 
     # target = np.array(max_accuracy_target)[indices]
@@ -337,11 +318,11 @@ if __name__ == '__main__':
     #             nearest_neighbor @ max_accuracy_eigenvectors.T) @ max_accuracy_eigenvectors
 
     # inp = np.concatenate([target, target_reconstructed, nearest_neighbor, nearest_neighbor_reconstructed], axis=0)
-    # visualize_faces_with_row_label(inp, n=1, rows=4, cols=5, title="Nearest Neighbor Fail Cases")
 
     """ 4. Measure Recognition Accuracies """
-    # recognition_accuracies(dataset=dataset)
-    recognition_accuracy_lda(dataset=dataset)
+    # if args.vis:
+      # recognition_accuracies(dataset=dataset)
+      # recognition_accuracy_lda(dataset=dataset)
 
     """ 5. Calculation Time """
     for key, value in calculation_time.items():
