@@ -3,6 +3,23 @@ from scipy import io
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
+
+def visualize_graph(x_axis, y_axes, xlabel, ylabel, legend, title=None):
+    for y in y_axes:
+        plt.plot(x_axis, y)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend(legend)
+
+    if title is not None:
+        plt.title(title)
+        plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
+    else:
+        plt.show()
+
+    plt.close()
+
 def visualize_confusion_matrix(y_test, prediction, title):
     cm = confusion_matrix(y_test, prediction)
     fig = plt.figure()
@@ -12,7 +29,7 @@ def visualize_confusion_matrix(y_test, prediction, title):
     plt.xlabel('Predicted')
     plt.ylabel('Target')
     plt.title(title)
-    plt.savefig("Q3/figures/" + title + ".png")
+    plt.savefig("figures/" + title + ".png")
     # plt.show()
 
 def visualize_face(face, shape=(46, 56), title=None):
@@ -21,7 +38,7 @@ def visualize_face(face, shape=(46, 56), title=None):
 
     if title is not None:
         plt.title(title)
-        plt.savefig("Q3/figures/" + title + ".png")
+        plt.savefig("figures/" + title + ".png")
     else:
         plt.show()
 
@@ -59,17 +76,19 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
             plt.imshow(face, cmap='gray')
 
         if title:
-          plt.savefig("Q3/figures/" + title + ".png")
+          plt.savefig("figures/" + title + ".png")
         else:
             plt.show()
 
     plt.close()
 
 
-def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2):
+def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, rows_label=None):
+    if rows_label is not None:
+      assert(len(rows_label)==rows)
+    
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
-    rows_label = ['target_image', 'target_neighbor', 'predicted_image', 'nearest_neighbor']
 
     for i in range(n):
   
