@@ -213,10 +213,10 @@ if __name__ == '__main__':
     if args.vis:
         n_identities = 5
 
-        visualize_3d(projections=train_projected[:n_identities * 8],
-                     identities=dataset["train_identities"][:n_identities * 8],
-                     title="Train Faces 3D projected (M=3)")
+        visualize_3d(projections=train_projected[40:96],
+                     identities=dataset["train_identities"][40:96],
+                     title="PCA Train Faces 3D projected (M=3)")
 
         visualize_3d(projections=test_projected[:n_identities * 2],
                      identities=dataset["test_identities"][:n_identities * 2],
-                     title="Test Faces 3D projected (M=3)")
+                     title="PCA Test Faces 3D projected (M=3)")

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def visualize_faces(faces, n_components, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, sub=None):
+def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, sub=None):
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
 
@@ -37,7 +37,7 @@ def visualize_faces(faces, n_components, n=1, shape=(46, 56), random=False, iden
         os.makedirs(f'figures/{sub}', exist_ok=True)
 
         if title:
-            plt.savefig(f"figures/{sub}/{title.replace(' ', '_').lower()}_{n_components}.png")
+            plt.savefig(f"figures/{sub}/{title.replace(' ', '_').lower()}.png")
         else:
             plt.show()
 
