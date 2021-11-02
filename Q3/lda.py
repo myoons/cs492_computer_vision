@@ -222,8 +222,6 @@ if __name__ == '__main__':
     # y_test = np.flip(y_test, axis=0)
     # recognition_accuracies(dataset=dataset)
     recognition_accuracy_pca(dataset=dataset)
-    x = []
-    x[1]
     calculation_time = {}
     
     """ 0. Normalize """
