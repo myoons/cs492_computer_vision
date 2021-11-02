@@ -11,7 +11,6 @@ if __name__ == '__main__':
                                       'test_img': [],
                                       'test_desc': [],
                                       })
-
     sift = cv2.SIFT.create()
     a = 0
     for c in classes:
