@@ -2,18 +2,12 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-import time
-import numpy as np
 from scipy import io
-from tqdm import trange
-from numpy import linalg
 from argparse import ArgumentParser
-from collections import defaultdict
-from sklearn.decomposition import PCA, IncrementalPCA
 
+from utils.utils import *
 from utils.dataset import split_train_test
 from utils.visualize import visualize_faces, visualize_graph
-
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -28,112 +22,93 @@ if __name__ == '__main__':
     """ Split Dataset """
     dataset = split_train_test(faces, identities, r=0.8, n_per_identity=10)
 
-    indices = np.random.choice(len(dataset["train_faces"]), 5, replace=False)
-    source = dataset["train_faces"][indices]
+    dataset['average_face'] = np.average(dataset['train_faces'], axis=0)
+    dataset['train_subtracted_faces'] = dataset['train_faces'] - dataset['average_face']
+    dataset['test_subtracted_faces'] = dataset['test_faces'] - dataset['average_face']
 
-    accuracy = defaultdict(list)
-    computation_time = defaultdict(list)
-    reconstruction_losses = defaultdict(list)
-    for n_components in trange(1, 104):
-        """ 1. Batch PCA """
-        pca = PCA(n_components=n_components)
+    N_FIRST_SUBSET = 104
+    M = 80
 
-        start = time.time()
-        pca.fit(dataset["train_faces"])
-        computation_time['pca'].append(time.time() - start)
-        projected_pca = pca.transform(dataset["train_faces"])
+    """ Number of images in first model 에 따라서 실험을 바꿔야 한다. """
+    _, _, batch_v, _, batch_t = batch_pca(dataset['train_faces'])
+    batch_reconstruction_loss = calculate_reconstruction_loss(dataset, batch_v, m=M)
+    batch_accuracy = calculate_accuracy(dataset, batch_v, m=M)
 
-        reconstructed_pca = pca.inverse_transform(projected_pca)
-        reconstruction_loss = np.average(linalg.norm(reconstructed_pca - dataset["train_faces"], axis=1), axis=0)
-        reconstruction_losses['pca'].append(reconstruction_loss)
+    _, _, fs_v, _, fs_t = batch_pca(dataset['train_faces'][:N_FIRST_SUBSET])
+    fs_reconstruction_loss = calculate_reconstruction_loss(dataset, fs_v, m=M)
+    fs_accuracy = calculate_accuracy(dataset, fs_v, m=M)
 
-        correct = 0
-        test_projected = pca.transform(dataset["test_faces"])
-        for idx in range(test_projected.shape[0]):
-            dist = linalg.norm(test_projected[idx] - projected_pca, axis=1)
-            min_distance_idx = np.argmin(dist)
+    inc_v, inc_t = incremental_pca(dataset, 208)
+    inc_reconstruction_loss = calculate_reconstruction_loss(dataset, inc_v, m=M)
+    inc_accuracy = calculate_accuracy(dataset, inc_v, m=M)
 
-            if dataset["test_identities"][idx] == dataset["train_identities"][min_distance_idx]:
-                correct += 1
-        accuracy['pca'].append(correct / test_projected.shape[0] * 100)
+    """ Split """
+    # list_accuracy, list_reconstruction_loss = [np.max(batch_accuracy)], [np.min(batch_reconstruction_loss)]
+    # list_joint, list_incremental, list_batch = [batch_t], [batch_t], [batch_t]
 
-        """ 2. First Subset PCA """
-        first_subset = dataset["train_faces"][:104]
-        first_pca = IncrementalPCA(n_components=n_components, batch_size=104)
+    # for split in range(52, 416, 52):
+    #     merge_w, merge_v, joint_t, incremental_t = merge_pca(dataset, split=split)
+    #     list_joint.append(joint_t)
+    #     list_incremental.append(incremental_t)
+    #     list_batch.append(batch_t)
+    #
+    #     merge_reconstruction_loss = calculate_reconstruction_loss(dataset, merge_v, m=M)
+    #     merge_accuracy = calculate_accuracy(dataset, merge_v, m=M)
+    #
+    #     list_accuracy.append(np.max(merge_accuracy))
+    #     list_reconstruction_loss.append(np.min(merge_reconstruction_loss))
+    #
+    # list_batch.append(batch_t)
+    # list_joint.append(batch_t)
+    # list_incremental.append(0.)
+    # list_accuracy.append(np.max(batch_accuracy))
+    # list_reconstruction_loss.append(np.min(batch_reconstruction_loss))
+    #
+    # list_accuracy_b, list_reconstruction_loss_b = [np.max(batch_accuracy)] * len(list_accuracy), [np.min(batch_reconstruction_loss)] * len(list_reconstruction_loss)
 
-        start = time.time()
-        first_pca.partial_fit(first_subset)
-        computation_time['first_subset'].append(time.time() - start)
-        projected_first_pca = first_pca.transform(dataset["train_faces"])
+    # if args.vis:
+    #     visualize_graph(x_axis=np.arange(0, 417, 52),
+    #                     y_axes=[list_batch, list_joint, list_incremental],
+    #                     xlabel="Number of images in first model",
+    #                     ylabel="computation time (s)",
+    #                     legend=['batch time', 'joint time', 'incremental time'],
+    #                     title="Incremental Computation Time")
+    #
+    #     visualize_graph(x_axis=np.arange(0, 417, 52),
+    #                     y_axes=[list_reconstruction_loss_b, list_reconstruction_loss],
+    #                     xlabel="Number of images in first model",
+    #                     ylabel=f"Reconstruction Loss (M={M})",
+    #                     legend=['batch', 'incremental'],
+    #                     title="Incremental Reconstruction Loss")
+    #
+    #     visualize_graph(x_axis=np.arange(0, 417, 52),
+    #                     y_axes=[list_accuracy_b, list_accuracy],
+    #                     xlabel="Number of images in first model",
+    #                     ylabel=f"Accuracy (M={M}) ",
+    #                     legend=['batch', 'incremental'],
+    #                     title="Incremental Accuracy")
 
-        reconstructed_first_pca = first_pca.inverse_transform(projected_first_pca)
-        reconstruction_loss = np.average(linalg.norm(reconstructed_first_pca - dataset["train_faces"], axis=1), axis=0)
-        reconstruction_losses['first_subset'].append(reconstruction_loss)
+    print(
+        f"""
+    Batch PCA : {batch_t:.5f} seconds
+    First Subset PCA : {fs_t:.5f} seconds
+    Incremental PCA : {inc_t:.5f} seconds
+        """)
 
-        correct = 0
-        test_projected = first_pca.transform(dataset["test_faces"])
-        for idx in range(test_projected.shape[0]):
-            dist = linalg.norm(test_projected[idx] - projected_first_pca, axis=1)
-            min_distance_idx = np.argmin(dist)
+    visualize_faces(batch_v, title="batch", sub="eigenface")
+    visualize_faces(fs_v, title="first_subset", sub="eigenface")
+    visualize_faces(inc_v, title="incremental", sub="eigenface")
 
-            if dataset["test_identities"][idx] == dataset["train_identities"][min_distance_idx]:
-                correct += 1
-        accuracy['first_subset'].append(correct / test_projected.shape[0] * 100)
+    visualize_graph(x_axis=np.arange(1, M + 1),
+                    y_axes=[batch_accuracy, fs_accuracy, inc_accuracy],
+                    xlabel="M",
+                    ylabel="Accuracy",
+                    legend=['PCA', 'First Subset PCA', 'Incremental PCA'],
+                    title="Accuracy")
 
-        """ 3.  IncrementalPCA  """
-        incremental_pca = IncrementalPCA(n_components=n_components, batch_size=104)
-        start = time.time()
-        incremental_pca.fit(dataset["train_faces"])
-        computation_time['incremental_pca'].append(time.time() - start)
-        projected_incremental_pca = incremental_pca.transform(dataset["train_faces"])
-
-        reconstructed_incremental_pca = incremental_pca.inverse_transform(projected_incremental_pca)
-        reconstruction_loss = np.average(linalg.norm(reconstructed_incremental_pca - dataset["train_faces"], axis=1), axis=0)
-        reconstruction_losses['incremental_pca'].append(reconstruction_loss)
-
-        correct = 0
-        test_projected = incremental_pca.transform(dataset["test_faces"])
-        for idx in range(test_projected.shape[0]):
-            dist = linalg.norm(test_projected[idx] - projected_incremental_pca, axis=1)
-            min_distance_idx = np.argmin(dist)
-
-            if dataset["test_identities"][idx] == dataset["train_identities"][min_distance_idx]:
-                correct += 1
-
-        accuracy['incremental_pca'].append(correct / test_projected.shape[0] * 100)
-
-        if args.vis:
-            reconstructed = reconstructed_pca[indices]
-            inp = np.concatenate([source[:5], reconstructed[:5]])
-            visualize_faces(inp, n_components=n_components, n=1, title="Train Reconstruction PCA", sub='pca')
-
-            reconstructed = reconstructed_first_pca[indices]
-            inp = np.concatenate([source[:5], reconstructed[:5]])
-            visualize_faces(inp, n_components=n_components, n=1, title="Train Reconstruction First Subset", sub='first_subset')
-
-            reconstructed = reconstructed_incremental_pca[indices]
-            inp = np.concatenate([source[:5], reconstructed[:5]])
-            visualize_faces(inp, n_components=n_components, n=1, title="Train Reconstruction Incremental PCA", sub='incremental_pca')
-
-    if args.vis:
-
-        visualize_graph(x_axis=np.arange(1, 104),
-                        y_axes=[accuracy['pca'], accuracy['first_subset'], accuracy['incremental_pca']],
-                        xlabel="M",
-                        ylabel="Identity Recognition Accuracy",
-                        legend=['PCA', 'First Subset', 'Incremental PCA'],
-                        title="Identity Recognition Accuracy")
-
-        visualize_graph(x_axis=np.arange(1, 104),
-                        y_axes=[computation_time['pca'], computation_time['first_subset'], computation_time['incremental_pca']],
-                        xlabel="M",
-                        ylabel="Computation time",
-                        legend=['PCA', 'First Subset', 'Incremental PCA'],
-                        title="Computation time")
-
-        visualize_graph(x_axis=np.arange(1, 104),
-                        y_axes=[reconstruction_losses['pca'], reconstruction_losses['first_subset'], reconstruction_losses['incremental_pca']],
-                        xlabel="M",
-                        ylabel="Reconstruction Loss",
-                        legend=['PCA', 'First Subset', 'Incremental PCA'],
-                        title="Reconstruction Loss")
+    visualize_graph(x_axis=np.arange(1, M + 1),
+                    y_axes=[batch_reconstruction_loss, fs_reconstruction_loss, inc_reconstruction_loss],
+                    xlabel="M",
+                    ylabel="Reconstruction Loss",
+                    legend=['PCA', 'First Subset PCA', 'Incremental PCA'],
+                    title="Reconstruction Loss")

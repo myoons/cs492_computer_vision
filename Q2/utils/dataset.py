@@ -13,4 +13,7 @@ def split_train_test(faces, identities, r=0.8, n_per_identity=10):
     dataset['test_faces'] = np.swapaxes(faces[..., (all_indices % n_per_identity) >= split], 0, 1)
     dataset['test_identities'] = np.swapaxes(identities[..., (all_indices % n_per_identity) >= split], 0, 1)
 
+    dataset['n_train'] = dataset['train_faces'].shape[0]
+    dataset['n_test'] = dataset['test_faces'].shape[0]
+
     return dataset
