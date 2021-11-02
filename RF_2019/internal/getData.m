@@ -7,7 +7,7 @@ function [ data_train, data_query ] = getData( MODE )
 %   3. Toy_Circle
 %   4. Caltech 101
 
-showImg = 1; % Show training & testing images and their image feature vector (histogram representation)
+showImg = 0; % Show training & testing images and their image feature vector (histogram representation)
 
 PHOW_Sizes = [4 8 10]; % Multi-resolution, these values determine the scale of each layer.
 PHOW_Step = 8; % The lower the denser. Select from {2,4,8,16}
@@ -107,13 +107,13 @@ switch MODE
                     imshow(I);
                     cnt = cnt+1;
                     drawnow;
-                end
+                    endz
                 
                 if size(I,3) == 3
                     I = rgb2gray(I); % PHOW work on gray scale image
                 end
                 
-                % For details of image description, see http://www.vlfeat.org/matlab/vl_phow.html
+                % For details of image description, see tho
                 [~, desc_tr{c,i}] = vl_phow(single(I),'Sizes',PHOW_Sizes,'Step',PHOW_Step); %  extracts PHOW features (multi-scaled Dense SIFT)
             end
         end
@@ -125,15 +125,14 @@ switch MODE
         % K-means clustering
         numBins = 256; % for instance,
         
-        
         % write your own codes here
-        % ...
-                  
+        % TODO : K-means Clustering
+
         disp('Encoding Images...')
         % Vector Quantisation
         
         % write your own codes here
-        % ...
+        % TODO
   
         
         % Clear unused varibles to save memory
@@ -158,7 +157,7 @@ switch MODE
                 I = imread(fullfile(subFolderName,imgList(imgIdx_te(i)).name));
                 
                 % Visualise
-                if i < 6 & showImg
+                if i < 6 && showImg
                     subaxis(length(classList),5,cnt,'SpacingVert',0,'MR',0);
                     imshow(I);
                     cnt = cnt+1;

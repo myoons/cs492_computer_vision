@@ -30,39 +30,12 @@ def batch_pca(train_faces):
     return covariance, eigenvalues, eigenvectors, mean_face, end - start
 
 
-def merge_pca(dataset, split=50):
-    f_train_faces = dataset['train_faces'][:split]
-    s_train_faces = dataset['train_faces'][split:]
+def merge_pca(dataset, split=52):
+    n = split // 52
+    all_indices = np.arange(dataset['train_faces'].shape[0])
 
-    f_cov, f_w, f_v, f_m, f_t = batch_pca(f_train_faces)
-    s_cov, s_w, s_v, s_m, s_t = batch_pca(s_train_faces)
-
-    n_f, n_s = f_train_faces.shape[0], s_train_faces.shape[0]
-    n_t = n_f + n_s
-    scatter = (n_f * n_s / (n_t ** 2)) * ((f_m - s_m) @ (f_m - s_m).T)
-    t_cov = (n_f / n_t) * f_cov + (n_s / n_t) * s_cov + scatter
-    phi = orth(np.concatenate([f_v[:len(s_v) // 2], s_v[:len(s_v) // 2], (f_m - s_m)[np.newaxis, ...]]).T).T
-    reduced = phi @ t_cov @ phi.T
-
-    third_start = time.time()
-    t_w, t_v = linalg.eig(reduced)
-    third_end = time.time()
-
-    t_v = t_v.T @ phi / linalg.norm(t_v.T @ phi, axis=1)[..., np.newaxis]
-    t_w, t_v = t_w.astype(float), t_v.astype(float)
-    sort_indices = np.argsort(t_w)[::-1]
-    t_v = t_v[sort_indices]
-
-    t_t = third_end - third_start
-
-    joint_t = f_t + s_t + t_t
-    incremental_t = s_t + t_t
-    return t_w, t_v, joint_t, incremental_t
-
-
-def merge_pca(dataset, split=50):
-    f_train_faces = dataset['train_faces'][:split]
-    s_train_faces = dataset['train_faces'][split:]
+    f_train_faces = dataset['train_faces'][all_indices % 8 < n]
+    s_train_faces = dataset['train_faces'][all_indices % 8 >= n]
 
     f_cov, f_w, f_v, f_m, f_t = batch_pca(f_train_faces)
     s_cov, s_w, s_v, s_m, s_t = batch_pca(s_train_faces)
@@ -91,16 +64,18 @@ def merge_pca(dataset, split=50):
 
 
 def incremental_pca(dataset, partition=104):
+    assert dataset['train_faces'].shape[0] % partition == 0
+
     times = []
-    trained_train_faces = dataset['train_faces'][:partition]
+    n = dataset['train_faces'].shape[0] // partition
+    all_indices = np.arange(dataset['train_faces'].shape[0])
+    trained_train_faces = dataset['train_faces'][all_indices % n == 0]
     n_trained = trained_train_faces.shape[0]
     trained_cov, _, trained_v, trained_m, t = batch_pca(trained_train_faces)
     times.append(t)
 
-    assert dataset['train_faces'].shape[0] % partition == 0
-    n = dataset['train_faces'].shape[0] // partition
     for i in range(1, n):
-        target_train_faces = dataset['train_faces'][partition * i:partition * (i+1)]
+        target_train_faces = dataset['train_faces'][all_indices % n == i]
         n_target = target_train_faces.shape[0]
         target_cov, _, target_v, target_m, t = batch_pca(target_train_faces)
         times.append(t)
