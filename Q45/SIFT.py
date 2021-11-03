@@ -5,7 +5,7 @@ import numpy as np
 from glob import glob
 from joblib import dump, load
 from collections import Counter
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans 
 
 
 def load_images():
