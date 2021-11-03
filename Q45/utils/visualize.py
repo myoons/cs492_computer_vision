@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 from sklearn.manifold import TSNE
+from sklearn.metrics import confusion_matrix
 
 
 def visualize_image(face, shape=(46, 56), title=None):
@@ -54,10 +56,11 @@ def visualize_images(faces, n=1, shape=(46, 56), random=False, identities=None, 
     plt.close()
 
 
-def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, rows_label=None):
+def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5,
+                                   rows=2, rows_label=None):
     if rows_label is not None:
-        assert(len(rows_label)==rows)
-    
+        assert (len(rows_label) == rows)
+
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
 
@@ -164,3 +167,61 @@ def visualize_3d(projections, identities, title=None):
         plt.show()
 
     plt.close()
+
+
+def visualize_confusion_matrix(cm, title):
+    # cm = confusion_matrix(y_true, y_pred)
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+    cax = ax.matshow(cm, cmap=plt.cm.Blues)
+    fig.colorbar(cax)
+    plt.xlabel('Predicted')
+    plt.ylabel('Target')
+
+    if title is not None:
+        plt.title(title)
+        plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
+    else:
+        plt.show()
+
+
+def plot_confusion_matrix(cm, target_names=None, cmap=None, normalize=True, labels=True, title='Confusion matrix'):
+    accuracy = np.trace(cm) / float(np.sum(cm))
+    misclass = 1 - accuracy
+
+    if cmap is None:
+        cmap = plt.get_cmap('Blues')
+
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    plt.figure(figsize=(8, 6))
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    plt.colorbar()
+
+    thresh = cm.max() / 1.5 if normalize else cm.max() / 2
+    if target_names is not None:
+        tick_marks = np.arange(len(target_names))
+        # plt.xticks(tick_marks, target_names)  # overlap
+        plt.yticks(tick_marks, target_names)
+
+    if labels:
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            if normalize:
+                plt.text(j, i, "{:0.2f}".format(cm[i, j]),
+                         horizontalalignment="center",
+                         color="white" if cm[i, j] > thresh else "black")
+            else:
+                plt.text(j, i, "{:,}".format(cm[i, j]),
+                         horizontalalignment="center",
+                         color="white" if cm[i, j] > thresh else "black")
+
+    # plt.ylabel('True label')
+    # plt.xlabel('Predicted label\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
+    # plt.tight_layout()
+    plt.title(title)
+    if title is not None:
+        plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
+    else:
+        plt.show()
+
+
