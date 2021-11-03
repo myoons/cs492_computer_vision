@@ -223,5 +223,3 @@ def plot_confusion_matrix(cm, target_names=None, cmap=None, normalize=True, labe
         plt.savefig(f"figures/{title.replace(' ', '_').lower()}.png")
     else:
         plt.show()
-
-

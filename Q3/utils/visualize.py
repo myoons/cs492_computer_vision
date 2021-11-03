@@ -21,6 +21,7 @@ def visualize_graph(x_axis, y_axes, xlabel, ylabel, legend, title=None):
 
     plt.close()
 
+
 def visualize_confusion_matrix(y_test, prediction, title):
     cm = confusion_matrix(y_test, prediction)
     fig = plt.figure()
@@ -32,6 +33,7 @@ def visualize_confusion_matrix(y_test, prediction, title):
     plt.title(title)
     plt.savefig("figure_k_5/" + title + ".png")
     # plt.show()
+
 
 def visualize_face(face, shape=(46, 56), title=None):
     face = np.swapaxes(np.reshape(face, shape), 0, 1)
@@ -68,7 +70,7 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
 
         for pos, idx in enumerate(indices):
             face = np.swapaxes(np.reshape(faces[idx], shape), 0, 1)
-            axes.append(fig.add_subplot(rows, cols, pos+1))
+            axes.append(fig.add_subplot(rows, cols, pos + 1))
 
             if identities is not None:
                 identity = str(identities[idx])
@@ -77,14 +79,15 @@ def visualize_faces(faces, n=1, shape=(46, 56), random=False, identities=None, t
             plt.imshow(face, cmap='gray')
 
         if title:
-          plt.savefig("figure_k_5/" + title + ".png")
+            plt.savefig("figure_k_5/" + title + ".png")
         else:
             plt.show()
 
     plt.close()
 
 
-def visualize_faces_with_x_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, x_label=None):
+def visualize_faces_with_x_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2,
+                                 x_label=None):
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
 
@@ -106,10 +109,10 @@ def visualize_faces_with_x_label(faces, n=1, shape=(46, 56), random=False, ident
 
         for pos, idx in enumerate(indices):
             face = np.swapaxes(np.reshape(faces[idx], shape), 0, 1)
-            axes.append(fig.add_subplot(rows, cols, pos+1))
+            axes.append(fig.add_subplot(rows, cols, pos + 1))
 
             if x_label is not None:
-              axes[-1].set_xlabel(f"ID {x_label[idx]}")
+                axes[-1].set_xlabel(f"ID {x_label[idx]}")
             if identities is not None:
                 identity = str(identities[idx])
                 axes[-1].set_title(identity)
@@ -117,22 +120,23 @@ def visualize_faces_with_x_label(faces, n=1, shape=(46, 56), random=False, ident
             plt.imshow(face, cmap='gray')
 
         if title:
-          plt.savefig("figure_k_5/" + title + ".png")
+            plt.savefig("figure_k_5/" + title + ".png")
         else:
             plt.show()
 
     plt.close()
 
 
-def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5, rows=2, rows_label=None):
+def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, identities=None, title=None, cols=5,
+                                   rows=2, rows_label=None):
     if rows_label is not None:
-      assert(len(rows_label)==rows)
-    
+        assert (len(rows_label) == rows)
+
     if identities is not None:
         assert faces.shape[0] == identities.shape[0], print("length of faces and identities are different")
 
     for i in range(n):
-  
+
         axes = []
         fig = plt.figure(figsize=(20, 10), dpi=100)
         if title is not None:
@@ -150,11 +154,11 @@ def visualize_faces_with_row_label(faces, n=1, shape=(46, 56), random=False, ide
         row_idx = 0
         for pos, idx in enumerate(indices):
             face = np.swapaxes(np.reshape(faces[idx], shape), 0, 1)
-            ax = fig.add_subplot(rows, cols, pos+1)
-            
-            if(idx % cols == 0):
-              ax.set_ylabel(rows_label[row_idx])
-              row_idx += 1
+            ax = fig.add_subplot(rows, cols, pos + 1)
+
+            if (idx % cols == 0):
+                ax.set_ylabel(rows_label[row_idx])
+                row_idx += 1
 
             axes.append(ax)
 
