@@ -5,7 +5,9 @@ import numpy as np
 from glob import glob
 from joblib import dump, load
 from collections import Counter
-from sklearn.cluster import KMeans 
+from sklearn.cluster import KMeans
+
+from utils.visualize import visualize_histograms, visualize_keypoints
 
 
 def load_images():
@@ -14,7 +16,7 @@ def load_images():
 
     for cls in classes:
         images = glob(f'Caltech_101/{cls}/**.jpg')
-        target_images = np.random.choice(images, 30, replace=False)
+        target_images = images[:30]
         dataset['train_img'][cls] = [cv2.imread(img) for img in target_images[:15]]
         dataset['test_img'][cls] = [cv2.imread(img) for img in target_images[15:]]
 
@@ -56,6 +58,7 @@ def train_codebook(descriptors, descriptor_type, n_clusters=100, checkpoint=None
         return load(checkpoint)
 
     kmeans = KMeans(n_clusters=n_clusters).fit(descriptors)
+    os.makedirs('checkpoints', exist_ok=True)
     dump(kmeans, f'checkpoints/{descriptor_type}_{n_clusters}_kmeans.pkl')
     return kmeans
 
@@ -102,8 +105,11 @@ if __name__ == '__main__':
              'yin_yang': 9}
 
     N_CLUSTERS = 100
-    DESCRIPTOR_TYPE = 'ORB'
-    assert DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']
+    for DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']:
+        # DESCRIPTOR_TYPE = 'ORB'
+        assert DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']
 
-    dataset, CODEBOOK = ready(DESCRIPTOR_TYPE, N_CLUSTERS)
-    print('END')
+        dataset, CODEBOOK = ready(DESCRIPTOR_TYPE, N_CLUSTERS)
+
+        visualize_histograms(dataset, DESCRIPTOR_TYPE)
+        visualize_keypoints(dataset, DESCRIPTOR_TYPE)
