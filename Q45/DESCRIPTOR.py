@@ -104,12 +104,13 @@ if __name__ == '__main__':
              'wrench': 8,
              'yin_yang': 9}
 
-    N_CLUSTERS = 100
-    for DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']:
-        # DESCRIPTOR_TYPE = 'ORB'
-        assert DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']
+    for N_CLUSTERS in [300, 500]:
+        # N_CLUSTERS = 300
+        for DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']:
+            # DESCRIPTOR_TYPE = 'ORB'
+            assert DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']
 
-        dataset, CODEBOOK = ready(DESCRIPTOR_TYPE, N_CLUSTERS)
+            dataset, CODEBOOK = ready(DESCRIPTOR_TYPE, N_CLUSTERS)
 
-        visualize_histograms(dataset, DESCRIPTOR_TYPE)
-        visualize_keypoints(dataset, DESCRIPTOR_TYPE)
+            visualize_histograms(dataset, DESCRIPTOR_TYPE, N_CLUSTERS)
+            visualize_keypoints(dataset, DESCRIPTOR_TYPE, N_CLUSTERS)
