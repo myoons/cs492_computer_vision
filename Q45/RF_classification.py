@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 
 from einops import rearrange
 from argparse import ArgumentParser
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, confusion_matrix
-
-from SIFT import ready
+from sklearn.metrics import confusion_matrix
+from DESCRIPTOR import ready
 from utils.visualize import visualize_confusion_matrix, plot_confusion_matrix
 
 

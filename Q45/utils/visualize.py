@@ -1,8 +1,47 @@
+import os
+import cv2
+
 import numpy as np
 import matplotlib.pyplot as plt
 import itertools
 from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
+
+
+def visualize_keypoints(dataset, descriptor_type, n_clusters):
+    if descriptor_type == 'SIFT':
+        descriptor = cv2.SIFT.create()
+    elif descriptor_type == 'BRISK':
+        descriptor = cv2.BRISK.create()
+    elif descriptor_type == 'ORB':
+        descriptor = cv2.ORB.create()
+    else:
+        raise ValueError("Wrong Descriptor Type")
+
+    for cls, images in dataset['train_img'].items():
+        os.makedirs(f'keypoints/{n_clusters}/{descriptor_type}/{cls}', exist_ok=True)
+
+        for idx, img in enumerate(images):
+            keypoints = descriptor.detect(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+            img = cv2.drawKeypoints(img, keypoints, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+            cv2.imwrite(f'keypoints/{n_clusters}/{descriptor_type}/{cls}/{idx}.png', img)
+
+
+def visualize_histograms(dataset, descriptor_type, n_clusters):
+    os.makedirs(f'histograms/{n_clusters}/{descriptor_type}/train', exist_ok=True)
+    os.makedirs(f'histograms/{n_clusters}/{descriptor_type}/test', exist_ok=True)
+
+    for cls, hist in dataset['train_hist'].items():
+        avg = np.average(hist, axis=0)
+        plt.bar(range(1, len(avg) + 1), avg)
+        plt.savefig(f'histograms/{n_clusters}/{descriptor_type}/train/{cls}.png')
+        plt.close()
+
+    for cls, hist in dataset['test_hist'].items():
+        avg = np.average(hist, axis=0)
+        plt.bar(range(1, len(avg) + 1), avg)
+        plt.savefig(f'histograms/{n_clusters}/{descriptor_type}/test/{cls}.png')
+        plt.close()
 
 
 def visualize_image(face, shape=(46, 56), title=None):
