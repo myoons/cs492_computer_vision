@@ -3,9 +3,13 @@ import cv2
 
 import numpy as np
 from glob import glob
+
+import torch
 from joblib import dump, load
 from collections import Counter
-from sklearn.cluster import KMeans 
+from sklearn.cluster import KMeans
+
+from torch import nn
 
 
 def load_images():
@@ -21,20 +25,12 @@ def load_images():
     return dataset
 
 
-def images_to_descriptors(images, descriptor_type='SIFT'):
-    if descriptor_type == 'SIFT':
-        descriptor = cv2.SIFT.create()
-    elif descriptor_type == 'BRISK':
-        descriptor = cv2.BRISK.create()
-    elif descriptor_type == 'ORB':
-        descriptor = cv2.ORB.create()
-    else:
-        raise ValueError("Wrong Descriptor Type")
-
+def images_to_descriptors(images):
+    kernel = nn.MaxPool2d(kernel_size=(5, 5), stride=(5, 5))
     descriptors = []
     for img in images:
-        _, desc = descriptor.detectAndCompute(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), None)
-        descriptors.append(desc)
+        tensor = torch.from_numpy(img).permute(2, 0, 1).float()
+        descriptors.append(img)
 
     return descriptors
 
@@ -51,32 +47,32 @@ def descriptors_to_histogram(descriptors, codebook):
     return hist
 
 
-def train_codebook(descriptors, descriptor_type, n_clusters=100, checkpoint=None):
-    if checkpoint and os.path.isfile(checkpoint):
+def train_codebook(descriptors, n_clusters=100, checkpoint=None):
+    if checkpoint:
         return load(checkpoint)
 
     kmeans = KMeans(n_clusters=n_clusters).fit(descriptors)
-    dump(kmeans, f'checkpoints/{descriptor_type}_{n_clusters}_kmeans.pkl')
+    dump(kmeans, 'saved_kmeans.pkl')
     return kmeans
 
 
 """ Constructing dataset (images, descriptors, histogram) & Training CODEBOOK. """
-def ready(descriptor_type, n_clusters):
+def ready():
     dataset = load_images()
     dataset['train_desc'] = {}
     dataset['test_desc'] = {}
 
     for (cls, images) in dataset['train_img'].items():
-        dataset['train_desc'][cls] = images_to_descriptors(images, descriptor_type)
+        dataset['train_desc'][cls] = images_to_descriptors(images)
     for (cls, images) in dataset['test_img'].items():
-        dataset['test_desc'][cls] = images_to_descriptors(images, descriptor_type)
+        dataset['test_desc'][cls] = images_to_descriptors(images)
 
     all_train_descriptors = []
     for descriptors in dataset['train_desc'].values():
         all_train_descriptors.append(np.concatenate(descriptors, axis=0))
 
     all_train_descriptors = np.concatenate(all_train_descriptors)
-    codebook = train_codebook(all_train_descriptors, descriptor_type, n_clusters=n_clusters, checkpoint=f'checkpoints/{descriptor_type}_{n_clusters}_kmeans.pkl')
+    codebook = train_codebook(all_train_descriptors, n_clusters=100, checkpoint='saved_kmeans.pkl')
 
     dataset['train_hist'] = {}
     dataset['test_hist'] = {}
@@ -101,9 +97,5 @@ if __name__ == '__main__':
              'wrench': 8,
              'yin_yang': 9}
 
-    N_CLUSTERS = 100
-    DESCRIPTOR_TYPE = 'ORB'
-    assert DESCRIPTOR_TYPE in ['SIFT', 'BRISK', 'ORB']
-
-    dataset, CODEBOOK = ready(DESCRIPTOR_TYPE, N_CLUSTERS)
+    dataset, CODEBOOK = ready()
     print('END')
