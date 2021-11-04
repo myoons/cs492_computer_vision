@@ -108,14 +108,15 @@ if __name__ == '__main__':
 
     """ sample """
     rf_classifier = RandomForestClassifier(n_estimators=256, max_depth=c)  # best_case
-    classifier.fit(x, y_true)
-    y_pred = classifier.predict(x_test)
+    rf_classifier.fit(X, y)
+    y_pred = rf_classifier.predict(X_test)
     print("accuracy : ", accuracy_score(y, y_pred))
 
     """ Experiment of Recognition Accuracies """
     n_estimators = [128, 256, 512]
     max_depth = [None, int(2 * c), c, int(c // 2)]
     max_features = [None, 'auto', 'log2']
+    max_features_2 = [1, 2, int(vocabulary_size//10)]
     max_samples = [0.3, 0.6, 0.9, None]
     max_leaf_nodes = [None, c, int(c // 2)]
     # rf_classifier = RandomForestClassifier(n_estimators=n_estimators,
@@ -133,9 +134,11 @@ if __name__ == '__main__':
     # test_n_classifiers(X, X_test, y, rf_classifiers, max_depth)
 
     """ 3. max_features """
-    # print("3. max_features")
+    print("3. max_features")
     # rf_classifiers = [RandomForestClassifier(n_estimators=256, max_depth=c, max_features=d) for d in max_features]
     # test_n_classifiers(X, X_test, y, rf_classifiers, max_features)
+    rf_classifiers = [RandomForestClassifier(n_estimators=256, max_depth=c, max_features=d) for d in max_features_2]
+    test_n_classifiers(X, X_test, y, rf_classifiers, max_features_2)
 
     """ 4. max_samples """
     # rf_classifiers = [RandomForestClassifier(n_estimators=256, max_depth=c, max_samples=d) for d in max_samples]
