@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 from einops import rearrange
 from argparse import ArgumentParser
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.ensemble import RandomForestClassifier
 from DESCRIPTOR import ready
 from utils.visualize import visualize_confusion_matrix, plot_confusion_matrix
 
@@ -89,7 +90,7 @@ if __name__ == '__main__':
              'wrench': 8,
              'yin_yang': 9}
 
-    dataset, CODEBOOK = ready()
+    dataset, CODEBOOK = ready('SIFT', 100)
 
     """ Training & Testing Data """
     X = []  # n_images, K

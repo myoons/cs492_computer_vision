@@ -64,6 +64,8 @@ def train_codebook(descriptors, descriptor_type, n_clusters=100, checkpoint=None
 
 
 """ Constructing dataset (images, descriptors, histogram) & Training CODEBOOK. """
+
+
 def ready(descriptor_type, n_clusters):
     dataset = load_images()
     dataset['train_desc'] = {}
@@ -79,7 +81,8 @@ def ready(descriptor_type, n_clusters):
         all_train_descriptors.append(np.concatenate(descriptors, axis=0))
 
     all_train_descriptors = np.concatenate(all_train_descriptors)
-    codebook = train_codebook(all_train_descriptors, descriptor_type, n_clusters=n_clusters, checkpoint=f'checkpoints/{descriptor_type}_{n_clusters}_kmeans.pkl')
+    codebook = train_codebook(all_train_descriptors, descriptor_type, n_clusters=n_clusters,
+                              checkpoint=f'checkpoints/{descriptor_type}_{n_clusters}_kmeans.pkl')
 
     dataset['train_hist'] = {}
     dataset['test_hist'] = {}
