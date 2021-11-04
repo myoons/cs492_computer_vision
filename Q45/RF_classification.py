@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score
 from einops import rearrange
 from argparse import ArgumentParser
 from sklearn.metrics import confusion_matrix
-from SIFT import ready
+from DESCRIPTOR import ready
 from utils.visualize import visualize_confusion_matrix, plot_confusion_matrix
 
 if __name__ == '__main__':
